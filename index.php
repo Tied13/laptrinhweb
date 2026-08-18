@@ -1,18 +1,39 @@
 <?php
+session_start();
 include 'db.php';
 
-// Kiểm tra xem có từ khóa tìm kiếm không
-$search = isset($_GET['search']) ? $_GET['search'] : '';
+// 1. Xử lý logic Giỏ hàng
+if (isset($_GET['action']) && $_GET['action'] == 'add_to_cart') {
+    $product_id = intval($_GET['id']);
+    if (!isset($_SESSION['cart'])) {
+        $_SESSION['cart'] = array();
+    }
+    if (isset($_SESSION['cart'][$product_id])) {
+        $_SESSION['cart'][$product_id]++;
+    } else {
+        $_SESSION['cart'][$product_id] = 1;
+    }
+    header('Location: index.php');
+    exit();
+}
+
+// 2. Kiểm tra từ khóa tìm kiếm
+$search = isset($_GET['search']) ? trim($_GET['search']) : '';
 
 if (!empty($search)) {
-    // Lọc sản phẩm theo tên nhập vào
-    $sql = "SELECT * FROM san_pham WHERE ten_san_pham LIKE '%$search%' ORDER BY id DESC";
+    $search_clean = mysqli_real_escape_string($conn, $search);
+    $sql = "SELECT * FROM san_pham WHERE ten_san_pham LIKE '%$search_clean%' ORDER BY id DESC";
 } else {
-    // Nếu không tìm kiếm, lấy toàn bộ sản phẩm
     $sql = "SELECT * FROM san_pham ORDER BY id DESC";
 }
 
 $result = mysqli_query($conn, $sql);
+
+// Tính tổng số lượng mặt hàng trong giỏ
+$cart_count = 0;
+if (isset($_SESSION['cart']) && !empty($_SESSION['cart'])) {
+    $cart_count = array_sum($_SESSION['cart']);
+}
 ?>
 
 <!DOCTYPE html>
@@ -22,7 +43,6 @@ $result = mysqli_query($conn, $sql);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gấu Bông Store - Cửa Hàng Gấu Bông Cao Cấp</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <!-- FontAwesome hỗ trợ icon -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
@@ -56,7 +76,6 @@ $result = mysqli_query($conn, $sql);
             box-shadow: 0 2px 10px rgba(255, 182, 193, 0.3);
         }
 
-/* Nền phần danh mục & banner */
         .main-content, .container {
             background-color: transparent !important;
         }
@@ -85,7 +104,6 @@ $result = mysqli_query($conn, $sql);
             font-size: 24px;
             font-weight: bold;
             color: #C084FC !important;
-            font-weight: bold;
             text-decoration: none;
             display: flex;
             align-items: center;
@@ -134,9 +152,43 @@ $result = mysqli_query($conn, $sql);
 
         .header-icons {
             display: flex;
+            align-items: center;
             gap: 15px;
-            font-size: 20px;
+            font-size: 18px;
             color: var(--secondary-color);
+        }
+
+        .cart-icon-wrapper {
+            position: relative;
+            color: #6B21A8;
+            text-decoration: none;
+            font-size: 20px;
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: -8px;
+            right: -10px;
+            background-color: #EC4899;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #6B21A8;
+            font-weight: 600;
+        }
+
+        .user-menu a {
+            color: #6B21A8;
+            text-decoration: none;
         }
 
         /* Navigation Bar */
@@ -147,6 +199,7 @@ $result = mysqli_query($conn, $sql);
         .nav-content {
             display: flex;
         }
+        
         .navbar, nav {
             background-color: #E9D5FF !important; 
         }
@@ -155,6 +208,7 @@ $result = mysqli_query($conn, $sql);
             color: #6B21A8 !important; 
             font-weight: 600;
         }
+
         .category-btn {
             background: var(--primary-color);
             color: #fff;
@@ -183,7 +237,7 @@ $result = mysqli_query($conn, $sql);
             background: rgba(255, 255, 255, 0.1);
         }
 
-        /* 3. Hero Section (Sidebar + Banner) */
+        /* Hero Section */
         .hero-section {
             display: flex;
             gap: 20px;
@@ -194,6 +248,8 @@ $result = mysqli_query($conn, $sql);
             background: #FFFFFF !important;
             border: 1px solid #F3E8FF;
             box-shadow: 0 4px 15px rgba(216, 180, 254, 0.2) !important;
+            width: 250px;
+            flex-shrink: 0;
         }
 
         .sidebar ul {
@@ -236,7 +292,7 @@ $result = mysqli_query($conn, $sql);
             border: 1px solid rgba(186, 112, 222, 0.4) !important;
             max-width: 420px !important;
             box-shadow: 0 10px 30px rgba(137, 137, 137, 0.3) !important;
-}
+        }
 
         .banner-text h2 {
             font-family: 'Montserrat', sans-serif !important;
@@ -247,27 +303,16 @@ $result = mysqli_query($conn, $sql);
             margin-bottom: 10px !important;
             text-transform: uppercase !important;
             text-align: center;
-}
+        }
 
         .banner-text p {
             font-size: 18px !important;
             color: #e2e8f0 !important;
             margin-bottom: 10px !important;
             text-align: center;
-}
+        }
 
-        .banner-btn {
-            display: inline-block !important;
-            padding: 10px 24px !important;
-            background: linear-gradient(135deg, #d4af37 0%, #aa7c11 100%) !important;
-            color: #fff !important;
-            text-decoration: none !important;
-            font-weight: bold !important;
-            font-size: 13px !important;
-            border-radius: 25px !important;
-            text-transform: uppercase !important;
-}
-        /* 4. Products Section */
+        /* Products Section */
         .products-section {
             background: #FFFFFF !important; 
             border-radius: 16px;
@@ -277,10 +322,6 @@ $result = mysqli_query($conn, $sql);
             margin-top: 25px !important; 
         }
 
-        .product-section h2 {
-            color: #9333EA !important; 
-            border-bottom: 2px solid #F3E8FF !important;
-        }
         .section-title {
             font-size: 18px;
             color: #9333EA !important; 
@@ -297,7 +338,7 @@ $result = mysqli_query($conn, $sql);
             width: 100% !important;
         }
 
-      .product-card {
+        .product-card {
             border-radius: 12px;
             padding: 12px;
             text-align: center;
@@ -323,12 +364,13 @@ $result = mysqli_query($conn, $sql);
             border-radius: 8px;
             margin-bottom: 12px;
         }
+
         .badge-sale {
             position: absolute;
             top: 18px;
             right: 18px;
             background: linear-gradient(135deg, #FF85A1, #F472B6) !important;
-            color: #e1bffc;
+            color: #ffffff;
             font-size: 11px;
             font-weight: bold;
             padding: 4px 10px;
@@ -370,7 +412,13 @@ $result = mysqli_query($conn, $sql);
             padding-top: 10px;
             border-top: 1px dashed #e9ecef;
             display: flex;
-            gap: 8px;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .admin-controls {
+            display: flex;
+            gap: 6px;
         }
 
         .btn-action {
@@ -385,6 +433,16 @@ $result = mysqli_query($conn, $sql);
             align-items: center;
             justify-content: center;
             gap: 4px;
+        }
+
+        .btn-user-cart {
+            background-color: #C084FC;
+            color: #ffffff;
+            border: none;
+        }
+
+        .btn-user-cart:hover {
+            background-color: #9333EA;
         }
 
         .btn-edit {
@@ -408,12 +466,6 @@ $result = mysqli_query($conn, $sql);
             background-color: #e74c3c;
             color: #fff;
         }
-
-        .btn-add-product, a[href="add.php"] {
-            background: linear-gradient(135deg, #F472B6 0%, #C084FC 100%) !important; 
-            border: none !important;
-            box-shadow: 0 4px 10px rgba(244, 114, 182, 0.3) !important;
-}
 
         /* Responsive */
         @media (max-width: 768px) {
@@ -443,19 +495,36 @@ $result = mysqli_query($conn, $sql);
             <a href="index.php" class="logo">
                 <i class="fa-solid fa-store"></i> Gấu Bông Store
             </a>
-                <form class="search-box" action="index.php" method="GET">
-                    <input type="text" name="search" placeholder="Nhập tên sản phẩm cần tìm..." value="<?php echo isset($_GET['search']) ? $_GET['search'] : ''; ?>">
-                    <button type="submit"><i class="fa-solid fa-magnifying-glass"></i> Tìm kiếm</button>
-                </form>
-            <div class="header-icons">
-    <!-- Nút thêm sản phẩm mới -->
-    <a href="add.php" style="background: #28a745; color: #fff; padding: 6px 12px; text-decoration: none; border-radius: 4px; font-size: 14px; display: flex; align-items: center; gap: 5px;">
-        <i class="fa-solid fa-plus"></i> Thêm sản phẩm
-    </a>
 
-    <a href="#" style="color: inherit;"><i class="fa-solid fa-cart-shopping"></i></a>
-    <a href="#" style="color: inherit;"><i class="fa-solid fa-user"></i></a>
-</div>
+            <form class="search-box" action="index.php" method="GET">
+                <input type="text" name="search" placeholder="Nhập tên sản phẩm cần tìm..." value="<?php echo htmlspecialchars($search); ?>">
+                <button type="submit"><i class="fa-solid fa-magnifying-glass"></i> Tìm kiếm</button>
+            </form>
+
+            <div class="header-icons">
+                <!-- Nút thêm sản phẩm mới (Dành cho Admin) -->
+                <a href="add.php" style="background: #28a745; color: #fff; padding: 6px 12px; text-decoration: none; border-radius: 4px; font-size: 14px; display: flex; align-items: center; gap: 5px;">
+                    <i class="fa-solid fa-plus"></i> Thêm sản phẩm
+                </a>
+
+                <!-- Giỏ hàng người dùng -->
+                <a href="cart.php" class="cart-icon-wrapper" title="Giỏ hàng">
+                    <i class="fa-solid fa-cart-shopping"></i>
+                    <?php if ($cart_count > 0): ?>
+                        <span class="cart-badge"><?php echo $cart_count; ?></span>
+                    <?php endif; ?>
+                </a>
+
+                <!-- Tài khoản người dùng -->
+                <div class="user-menu">
+                    <?php if (isset($_SESSION['user_name'])): ?>
+                        <span><i class="fa-solid fa-user-check"></i> <?php echo htmlspecialchars($_SESSION['user_name']); ?></span>
+                        <a href="logout.php" title="Đăng xuất"><i class="fa-solid fa-right-from-bracket"></i></a>
+                    <?php else: ?>
+                        <a href="login.php" title="Đăng nhập"><i class="fa-solid fa-user"></i> Đăng nhập</a>
+                    <?php endif; ?>
+                </div>
+            </div>
         </div>
     </header>
 
@@ -467,7 +536,7 @@ $result = mysqli_query($conn, $sql);
             </div>
             <ul class="main-menu">
                 <li><a href="index.php">Trang chủ</a></li>
-                <li><a href="#">Sản phẩm</a></li>
+                <li><a href="products.php">Sản phẩm</a></li>
                 <li><a href="#">Tin tức</a></li>
                 <li><a href="#">Giới thiệu</a></li>
                 <li><a href="#">Liên hệ</a></li>
@@ -481,7 +550,7 @@ $result = mysqli_query($conn, $sql);
         <div class="hero-section">
             <aside class="sidebar">
                 <ul>
-                    <li><a href="#">Tất cả sản phẩm <i class="fa-solid fa-chevron-right"></i></a></li>
+                    <li><a href="index.php">Tất cả sản phẩm <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a href="#">Gấu Bông Teddy <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a href="#">Gấu Bông Capybara <i class="fa-solid fa-chevron-right"></i></a></li>
                     <li><a href="#">Thỏ Bông <i class="fa-solid fa-chevron-right"></i></a></li>
@@ -499,38 +568,47 @@ $result = mysqli_query($conn, $sql);
 
         <!-- Products List -->
         <section class="products-section">
-            <h3 class="section-title">Sản Phẩm Khuyến Mãi</h3>
-            <div class="product-grid">
-    <?php if (mysqli_num_rows($result) > 0): ?>
-        <?php while($row = mysqli_fetch_assoc($result)): ?>
-            <div class="product-card">
-                <span class="badge-sale">Sale 20%</span>
-                <img src="images/<?php echo $row['hinh_anh']; ?>" alt="<?php echo $row['ten_san_pham']; ?>">
-                
-                <div>
-                    <div class="product-title"><?php echo $row['ten_san_pham']; ?></div>
-                    <div class="product-price"><?php echo number_format($row['gia']); ?> VNĐ</div>
-                    <div class="product-desc"><?php echo $row['mo_ta']; ?></div>
-                </div>
-                
-                <div class="product-actions">
-                    <a href="edit.php?id=<?php echo $row['id']; ?>" class="btn-action btn-edit">
-                        <i class="fa-solid fa-pen-to-square"></i> Sửa
-                    </a>
-                    <a href="delete.php?id=<?php echo $row['id']; ?>" onclick="return confirm('Bạn có chắc muốn xóa sản phẩm này?')" class="btn-action btn-delete">
-                        <i class="fa-solid fa-trash"></i> Xóa
-                    </a>
-                </div>
-            </div>
-        <?php endwhile; ?>
-    <?php else: ?>
-        <p>Chưa có sản phẩm nào trong cửa hàng!</p>
-    <?php endif; ?>
-</div>
+            <h3 class="section-title">
+                <?php echo !empty($search) ? 'Kết quả tìm kiếm cho: "' . htmlspecialchars($search) . '"' : 'Sản Phẩm Khuyến Mãi'; ?>
+            </h3>
 
-        </div>
-    </section>
-</div>
+            <div class="product-grid">
+                <?php if (mysqli_num_rows($result) > 0): ?>
+                    <?php while($row = mysqli_fetch_assoc($result)): ?>
+                        <div class="product-card">
+                            <span class="badge-sale">Sale 20%</span>
+                            <img src="images/<?php echo htmlspecialchars($row['hinh_anh']); ?>" alt="<?php echo htmlspecialchars($row['ten_san_pham']); ?>">
+                            
+                            <div>
+                                <div class="product-title"><?php echo htmlspecialchars($row['ten_san_pham']); ?></div>
+                                <div class="product-price"><?php echo number_format($row['gia']); ?> VNĐ</div>
+                                <div class="product-desc"><?php echo htmlspecialchars($row['mo_ta']); ?></div>
+                            </div>
+                            
+                            <div class="product-actions">
+                                <!-- Thêm vào giỏ hàng dành cho Người mua -->
+                                <a href="index.php?action=add_to_cart&id=<?php echo $row['id']; ?>" class="btn-action btn-user-cart">
+                                    <i class="fa-solid fa-cart-plus"></i> Thêm giỏ hàng
+                                </a>
+
+                                <!-- Chức năng Quản trị (Admin) -->
+                                <div class="admin-controls">
+                                    <a href="edit.php?id=<?php echo $row['id']; ?>" class="btn-action btn-edit">
+                                        <i class="fa-solid fa-pen-to-square"></i> Sửa
+                                    </a>
+                                    <a href="delete.php?id=<?php echo $row['id']; ?>" onclick="return confirm('Bạn có chắc muốn xóa sản phẩm này?')" class="btn-action btn-delete">
+                                        <i class="fa-solid fa-trash"></i> Xóa
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endwhile; ?>
+                <?php else: ?>
+                    <p style="grid-column: 1/-1; text-align: center; padding: 20px;">Không tìm thấy sản phẩm nào!</p>
+                <?php endif; ?>
+            </div>
+        </section>
+    </div>
 
 </body>
 </html>
