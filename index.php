@@ -1,6 +1,6 @@
 <?php
 session_start();
-include 'db.php';
+include 'database.php';
 
 // 1. Xử lý logic Giỏ hàng
 if (isset($_GET['action']) && $_GET['action'] == 'add_to_cart') {
