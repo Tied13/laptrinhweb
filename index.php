@@ -90,11 +90,6 @@ if (!empty($_SESSION['cart'])) {
             </form>
 
             <div class="header-right">
-                <!-- Nút Thêm sản phẩm -->
-                <a href="admin/product-add.php" class="btn-add-product">
-                    <i class="fa-solid fa-plus"></i> Thêm sản phẩm
-                </a>
-
                 <!-- Biểu tượng Giỏ hàng -->
                 <a href="cart.php" class="cart-icon-btn">
                     <i class="fa-solid fa-bag-shopping"></i>
