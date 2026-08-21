@@ -10,7 +10,7 @@
     <?php include("includes/header.php"); ?>
     <section class="register">
         <h2>Đăng ký tài khoản</h2>
-        <form action="#" method="post">
+        <form action="controllers/AuthController.php" method="post">
         <input type="text" name="fullname" placeholder="Họ và tên" required />
         <input type="text" name="username" placeholder="Tên đăng nhập" required />
         <input type="email" name="email" placeholder="Email" required />
