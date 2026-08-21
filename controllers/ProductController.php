@@ -72,6 +72,37 @@ if ($action === 'login' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['error'] = "Sai tài khoản hoặc mật khẩu!";
         header("Location: ../login.php");
     }
+    // be3
+    public function detail() {
+        $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+        
+        if ($id > 0) {
+            // Lấy thông tin chi tiết
+            $product = $this->productModel->getProductById($id);
+            // Lấy mảng ảnh phụ
+            $gallery = $this->productModel->getProductImages($id);
+            
+            if ($product) {
+                // Render ra view (File nằm ở thư mục gốc)
+                require_once 'product-detail.php'; 
+            } else {
+                echo "Sản phẩm không tồn tại!";
+            }
+        } else {
+            echo "ID sản phẩm không hợp lệ!";
+        }
+    }
+// be3
+    public function deleteImagesPhysical($product_id) {
+        $images = $this->productModel->getProductImages($product_id);
+        if (!empty($images)) {
+            foreach ($images as $img) {
+                if (file_exists($img['image_url'])) {
+                    unlink($img['image_url']);
+                }
+            }
+        }
+    }
     exit();
 }
 
