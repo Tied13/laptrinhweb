@@ -96,7 +96,7 @@ if ($conn instanceof PDO) {
 </head>
 <body>
     <div class="container hero-section">
-       <div class="sidebar">
+    <div class="sidebar">
     <div class="sidebar-title"><i class="fa-solid fa-list-ul"></i> DANH MỤC</div>
     <ul>
         <!-- Click Tất cả sản phẩm -> Quay về Trang chủ -->
@@ -110,7 +110,7 @@ if ($conn instanceof PDO) {
         <?php foreach ($categories as $cat_item): ?>
             <li>
                 <a href="index.php?category=<?php echo $cat_item['id']; ?>" 
-                   class="<?php echo (isset($_GET['category']) && $_GET['category'] == $cat_item['id']) ? 'active' : ''; ?>">
+                class="<?php echo (isset($_GET['category']) && $_GET['category'] == $cat_item['id']) ? 'active' : ''; ?>">
                     <?php echo htmlspecialchars($cat_item['name']); ?> <i class="fa-solid fa-chevron-right"></i>
                 </a>
             </li>
@@ -126,8 +126,8 @@ if ($conn instanceof PDO) {
                         <div class="product-card">
                             <span class="badge-sale">Sale 20%</span>
                             <img src="<?php echo htmlspecialchars($row['thumbnail']); ?>" 
-                                 onerror="this.src='https://via.placeholder.com/300x300?text=No+Image';" 
-                                 alt="<?php echo htmlspecialchars($row['name']); ?>">
+                                onerror="this.src='https://via.placeholder.com/300x300?text=No+Image';" 
+                                alt="<?php echo htmlspecialchars($row['name']); ?>">
                             
                             <a href="product-detail.php?id=<?php echo $row['id']; ?>" class="product-title">
                                 <?php echo htmlspecialchars($row['name']); ?>
@@ -156,7 +156,7 @@ if ($conn instanceof PDO) {
                 <a href="products.php?page=<?php echo max(1, $page-1); ?><?php echo $category_id ? "&category=$category_id" : ""; ?>">&laquo; Trang trước</a>
                 <?php for($i = 1; $i <= max(1, $total_pages); $i++): ?>
                     <a href="products.php?page=<?php echo $i; ?><?php echo $category_id ? "&category=$category_id" : ""; ?>" 
-                       class="<?php echo ($i == $page) ? 'active' : ''; ?>">
+                    class="<?php echo ($i == $page) ? 'active' : ''; ?>">
                         <?php echo $i; ?>
                     </a>
                 <?php endfor; ?>

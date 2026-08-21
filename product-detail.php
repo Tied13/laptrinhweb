@@ -32,9 +32,9 @@ if ($conn instanceof PDO) {
 <body>
     <div class="container detail-container" style="display: flex; gap: 30px; margin-top: 30px; background: #fff; padding: 25px; border-radius: 16px;">
         <div class="gallery" style="flex: 1;">
-            <img id="mainImage" class="main-img" 
-                 src="<?php echo htmlspecialchars($product['thumbnail'] ?? 'https://via.placeholder.com/400'); ?>" 
-                 style="width: 100%; height: 350px; object-fit: cover; border-radius: 12px;">
+            <img id="mainImage" class="main-img"
+                src="<?php echo htmlspecialchars($product['thumbnail'] ?? 'https://via.placeholder.com/400'); ?>" 
+                style="width: 100%; height: 350px; object-fit: cover; border-radius: 12px;">
             <div class="thumb-list" style="display: flex; gap: 10px; margin-top: 10px;">
                 <img class="thumb-img active" src="<?php echo htmlspecialchars($product['thumbnail'] ?? 'https://via.placeholder.com/400'); ?>" style="width: 70px; height: 70px; object-fit: cover; border-radius: 8px; cursor: pointer;">
                 <img class="thumb-img" src="https://images.unsplash.com/photo-1563241527-3004b7be0ffd?q=80&w=200" style="width: 70px; height: 70px; object-fit: cover; border-radius: 8px; cursor: pointer;">
@@ -60,6 +60,40 @@ if ($conn instanceof PDO) {
             <div class="product-description" style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;">
                 <?php echo htmlspecialchars($product['description'] ?? ''); ?>
             </div>
+
+            // be 3
+            <?php require_once 'includes/header.php'; ?>
+
+<div class="container product-detail-wrapper" style="margin-top: 50px;">
+    <h1><?= htmlspecialchars($product['name'] ?? 'Tên sản phẩm') ?></h1>
+    
+    <div class="gallery-container" style="margin: 20px 0;">
+        <h3>Ảnh sản phẩm</h3>
+        <div class="gallery-images" style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <?php if (!empty($gallery)): ?>
+                <?php foreach ($gallery as $image): ?>
+                    <img src="<?= htmlspecialchars($image['image_url']) ?>" 
+                        alt="Thumbnail" 
+                        style="width: 150px; height: 150px; object-fit: cover; border: 1px solid #ccc; border-radius: 5px;">
+                <?php endforeach; ?>
+            <?php else: ?>
+                <p>Sản phẩm này chưa có ảnh phụ.</p>
+            <?php endif; ?>
+        </div>
+    </div>
+
+    <hr>
+
+    <div class="product-description">
+        <h3>Bài viết Review chi tiết</h3>
+        <div class="html-content" style="line-height: 1.6;">
+            <?= $product['description'] ?? 'Chưa có bài viết đánh giá.' ?> 
+        </div>
+    </div>
+
+</div>
+
+<?php require_once 'includes/footer.php'; ?>
         </div>
     </div>
     <script src="assets/js/main.js"></script>
