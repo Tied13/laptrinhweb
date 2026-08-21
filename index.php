@@ -1,36 +1,69 @@
 <?php
 session_start();
-include 'db.php';
 
-// 1. Xử lý logic Giỏ hàng
-if (isset($_GET['action']) && $_GET['action'] == 'add_to_cart') {
-    $product_id = intval($_GET['id']);
-    if (!isset($_SESSION['cart'])) {
-        $_SESSION['cart'] = array();
-    }
-    if (isset($_SESSION['cart'][$product_id])) {
-        $_SESSION['cart'][$product_id]++;
-    } else {
-        $_SESSION['cart'][$product_id] = 1;
-    }
-    header('Location: index.php');
-    exit();
-}
-
-// 2. Kiểm tra từ khóa tìm kiếm
-$search = isset($_GET['search']) ? trim($_GET['search']) : '';
-if (!empty($search)) {
-    $search_clean = mysqli_real_escape_string($conn, $search);
-    $sql = "SELECT * FROM san_pham WHERE ten_san_pham LIKE '%$search_clean%' ORDER BY id DESC";
+if (file_exists('config/database.php')) {
+    require_once 'config/database.php';
+    $database = new Database();
+    $conn = $database->getConnection();
 } else {
-    $sql = "SELECT * FROM san_pham ORDER BY id DESC";
+    include 'config/database.php';
 }
-$result = mysqli_query($conn, $sql);
 
-// Tính tổng số lượng mặt hàng trong giỏ
+// 1. Lấy tham số lọc
+$category_id = isset($_GET['category']) ? intval($_GET['category']) : 0;
+$search = isset($_GET['search']) ? trim($_GET['search']) : '';
+
+// 2. Lấy danh sách danh mục từ bảng `categories`
+$categories = [];
+if (isset($conn) && $conn instanceof PDO) {
+    $stmt_cat = $conn->prepare("SELECT * FROM categories WHERE status = 1 ORDER BY id ASC");
+    $stmt_cat->execute();
+    $categories = $stmt_cat->fetchAll(PDO::FETCH_ASSOC);
+} else {
+    $res_cat = mysqli_query($conn, "SELECT * FROM categories WHERE status = 1 ORDER BY id ASC");
+    while ($c = mysqli_fetch_assoc($res_cat)) { $categories[] = $c; }
+}
+
+// 3. Xây dựng truy vấn lấy sản phẩm từ bảng `products`
+$where_clauses = [];
+$params = [];
+
+if (!empty($search)) {
+    $where_clauses[] = "name LIKE :search";
+    $params[':search'] = "%{$search}%";
+}
+
+if ($category_id > 0) {
+    $where_clauses[] = "category_id = :category_id";
+    $params[':category_id'] = $category_id;
+}
+
+$where_sql = count($where_clauses) > 0 ? " WHERE " . implode(' AND ', $where_clauses) : "";
+
+// Lấy tối đa 8 sản phẩm cho Trang chủ
+$products = [];
+if ($conn instanceof PDO) {
+    $sql_prod = "SELECT * FROM products" . $where_sql . " ORDER BY id DESC LIMIT 8";
+    $stmt_prod = $conn->prepare($sql_prod);
+    $stmt_prod->execute($params);
+    $products = $stmt_prod->fetchAll(PDO::FETCH_ASSOC);
+} else {
+    $where_mysqli = "";
+    if (!empty($search)) $where_mysqli .= " AND name LIKE '%".mysqli_real_escape_string($conn, $search)."%'";
+    if ($category_id > 0) $where_mysqli .= " AND category_id = $category_id";
+    if (!empty($where_mysqli)) $where_mysqli = " WHERE " . substr($where_mysqli, 5);
+
+    $sql_prod = "SELECT * FROM products" . $where_mysqli . " ORDER BY id DESC LIMIT 8";
+    $res_prod = mysqli_query($conn, $sql_prod);
+    while ($p = mysqli_fetch_assoc($res_prod)) { $products[] = $p; }
+}
+
+// Đếm tổng số lượng sản phẩm trong Giỏ hàng
 $cart_count = 0;
-if (isset($_SESSION['cart']) && !empty($_SESSION['cart'])) {
-    $cart_count = array_sum($_SESSION['cart']);
+if (!empty($_SESSION['cart'])) {
+    foreach ($_SESSION['cart'] as $item) {
+        $cart_count += is_array($item) ? ($item['quantity'] ?? 1) : (int)$item;
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -38,52 +71,41 @@ if (isset($_SESSION['cart']) && !empty($_SESSION['cart'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gấu Bông Store - Cửa Hàng Gấu Bông Cao Cấp</title>
-    <!-- CSS External -->
+    <title>Trang Chủ - Gấu Bông Store</title>
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <!-- Header Top -->
+
+    <!-- Header & Thanh Tìm Kiếm -->
     <header>
         <div class="container header-content">
             <a href="index.php" class="logo">
-                <i class="fa-solid fa-store"></i> Gấu Bông Store
+                <i class="fa-solid fa-heart"></i> Gấu Bông Store
             </a>
 
-            <form class="search-box" action="index.php" method="GET">
+            <form action="index.php" method="GET" class="search-box">
                 <input type="text" name="search" placeholder="Nhập tên sản phẩm cần tìm..." value="<?php echo htmlspecialchars($search); ?>">
                 <button type="submit"><i class="fa-solid fa-magnifying-glass"></i> Tìm kiếm</button>
             </form>
 
-            <div class="header-icons">
-                <!-- Nút thêm sản phẩm mới (Dành cho Admin) -->
-                <a href="add.php" class="btn-add-product">
-                    <i class="fa-solid fa-plus"></i> Thêm sản phẩm
+            <div class="header-right">
+                <!-- Biểu tượng Giỏ hàng -->
+                <a href="cart.php" class="cart-icon-btn">
+                    <i class="fa-solid fa-bag-shopping"></i>
+                    <span class="cart-badge-num"><?php echo $cart_count; ?></span>
                 </a>
 
-                <!-- Giỏ hàng người dùng -->
-                <a href="cart.php" class="cart-icon-wrapper" title="Giỏ hàng">
-                    <i class="fa-solid fa-cart-shopping"></i>
-                    <?php if ($cart_count > 0): ?>
-                        <span class="cart-badge"><?php echo $cart_count; ?></span>
-                    <?php endif; ?>
+                <!-- Nút Đăng nhập / Tài khoản -->
+                <a href="login.php" class="user-account-btn">
+                    <i class="fa-regular fa-user"></i>
+                    <span>Đăng nhập</span>
                 </a>
-
-                <!-- Tài khoản người dùng -->
-                <div class="user-menu">
-                    <?php if (isset($_SESSION['user_name'])): ?>
-                        <span><i class="fa-solid fa-user-check"></i> <?php echo htmlspecialchars($_SESSION['user_name']); ?></span>
-                        <a href="logout.php" title="Đăng xuất"><i class="fa-solid fa-right-from-bracket"></i></a>
-                    <?php else: ?>
-                        <a href="login.php" title="Đăng nhập"><i class="fa-solid fa-user"></i> Đăng nhập</a>
-                    <?php endif; ?>
-                </div>
             </div>
         </div>
     </header>
 
-    <!-- Navigation -->
+    <!-- Navigation Bar -->
     <nav>
         <div class="container nav-content">
             <div class="category-btn">
@@ -99,84 +121,80 @@ if (isset($_SESSION['cart']) && !empty($_SESSION['cart'])) {
         </div>
     </nav>
 
-    <!-- Main Container -->
-    <div class="container">
-        <!-- Hero Section -->
-        <div class="hero-section">
-            <aside class="sidebar">
-                <ul>
-                    <li><a href="products.php">Tất cả sản phẩm <i class="fa-solid fa-chevron-right"></i></a></li>
-                    <li><a href="products.php">Gấu Bông Teddy <i class="fa-solid fa-chevron-right"></i></a></li>
-                    <li><a href="products.php">Gấu Bông Capybara <i class="fa-solid fa-chevron-right"></i></a></li>
-                    <li><a href="products.php">Thỏ Bông <i class="fa-solid fa-chevron-right"></i></a></li>
-                    <li><a href="products.php">Phụ kiện gấu bông <i class="fa-solid fa-chevron-right"></i></a></li>
-                    <li><a href="products.php">Sản phẩm khuyến mãi <i class="fa-solid fa-chevron-right"></i></a></li>
-                </ul>
-            </aside>
+    <!-- Hero Section (Sidebar & Banner Slide) -->
+    <div class="container hero-section">
+        <!-- Sidebar Danh mục sản phẩm -->
+        <aside class="sidebar">
+            <ul>
+                <li>
+                    <a href="index.php" class="<?php echo $category_id == 0 ? 'active' : ''; ?>">
+                        <span>Tất cả sản phẩm</span> <i class="fa-solid fa-chevron-right"></i>
+                    </a>
+                </li>
+                <?php foreach ($categories as $cat_item): ?>
+                    <li>
+                        <a href="index.php?category=<?php echo $cat_item['id']; ?>" 
+                           class="<?php echo $category_id == $cat_item['id'] ? 'active' : ''; ?>">
+                            <span><?php echo htmlspecialchars($cat_item['name']); ?></span> <i class="fa-solid fa-chevron-right"></i>
+                        </a>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
+        </aside>
 
-            <!-- Slider Banner Động -->
-            <div class="slider-container">
-                <div class="slide active" style="background-image: url('images/4.jpg');">
-                    <div class="banner-text">
-                        <h2>ƯU ĐÃI LỚN!</h2>
-                        <p>Giảm giá tới 50% cho các dòng gấu bông cao cấp</p>
-                    </div>
-                </div>
-                <div class="slide" style="background-image: url('images/4.jpg');">
-                    <div class="banner-text">
-                        <h2>BỘ SƯU TẬP MỚI</h2>
-                        <p>Khám phá mẫu Capybara siêu đáng yêu năm 2026</p>
-                    </div>
+        <!-- Slider Banner -->
+        <div class="slider-container">
+            <div class="slide active" style="background-image: url('images/4.jpg');">
+                <div class="banner-overlay">
+                    <h2>ƯU ĐÃI LỚN!</h2>
+                    <p>Giảm giá tới 50% cho các dòng gấu bông cao cấp</p>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Products List - Grid 4 Cột -->
-        <section class="products-section">
-            <h3 class="section-title">
-                <?php echo !empty($search) ? 'Kết quả tìm kiếm cho: "' . htmlspecialchars($search) . '"' : 'Sản Phẩm Mới / Bán Chạy'; ?>
-            </h3>
+    <!-- Danh Sách Sản Phẩm Nổi Bật -->
+    <div class="container">
+        <section class="products-wrapper">
+            <h2 class="section-heading">
+                <?php echo $category_id > 0 ? "SẢN PHẨM THEO DANH MỤC" : "SẢN PHẨM MỚI / BÁN CHẠY"; ?>
+            </h2>
 
             <div class="product-grid">
-                <?php if (mysqli_num_rows($result) > 0): ?>
-                    <?php while($row = mysqli_fetch_assoc($result)): ?>
+                <?php if (!empty($products)): ?>
+                    <?php foreach ($products as $row): ?>
                         <div class="product-card">
-                            <span class="badge-sale">Sale 20%</span>
-                            <img src="images/<?php echo htmlspecialchars($row['hinh_anh']); ?>" alt="<?php echo htmlspecialchars($row['ten_san_pham']); ?>">
+                            <div class="product-img-wrapper">
+                                <span class="badge-sale">Sale 20%</span>
+                                <img src="<?php echo htmlspecialchars($row['thumbnail']); ?>" 
+                                     onerror="this.src='https://via.placeholder.com/300x300?text=No+Image';" 
+                                     alt="<?php echo htmlspecialchars($row['name']); ?>">
+                            </div>
                             
-                            <div>
-                                <a href="product-detail.php?id=<?php echo $row['id']; ?>" class="product-title">
-                                    <?php echo htmlspecialchars($row['ten_san_pham']); ?>
-                                </a>
-                                <div class="product-price"><?php echo number_format($row['gia']); ?> VNĐ</div>
-                                <div class="product-desc"><?php echo htmlspecialchars($row['mo_ta']); ?></div>
+                            <a href="product-detail.php?id=<?php echo $row['id']; ?>" class="product-title">
+                                <?php echo htmlspecialchars($row['name']); ?>
+                            </a>
+                            
+                            <div class="product-price">
+                                <?php echo number_format($row['price'], 0, ',', '.'); ?> VNĐ
                             </div>
 
-                            <div class="product-actions">
-                                <!-- Thêm vào giỏ hàng dành cho Người mua -->
-                                <a href="index.php?action=add_to_cart&id=<?php echo $row['id']; ?>" class="btn-action btn-user-cart">
-                                    <i class="fa-solid fa-cart-plus"></i> Thêm giỏ hàng
-                                </a>
-
-                                <!-- Chức năng Quản trị (Admin) -->
-                                <div class="admin-controls">
-                                    <a href="edit.php?id=<?php echo $row['id']; ?>" class="btn-action btn-edit">
-                                        <i class="fa-solid fa-pen-to-square"></i> Sửa
-                                    </a>
-                                    <a href="delete.php?id=<?php echo $row['id']; ?>" onclick="return confirm('Bạn có chắc muốn xóa sản phẩm này?')" class="btn-action btn-delete">
-                                        <i class="fa-solid fa-trash"></i> Xóa
-                                    </a>
-                                </div>
-                            </div>
+                            <a href="cart.php?action=add&id=<?php echo $row['id']; ?>" class="btn-add-cart-grid">
+                                <i class="fa-solid fa-cart-shopping"></i> Thêm giỏ hàng
+                            </a>
                         </div>
-                    <?php endwhile; ?>
+                    <?php endforeach; ?>
                 <?php else: ?>
-                    <p style="grid-column: 1/-1; text-align: center; padding: 20px;">Không tìm thấy sản phẩm nào!</p>
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #888;">
+                        Không tìm thấy sản phẩm nào!
+                    </div>
                 <?php endif; ?>
             </div>
         </section>
     </div>
 
+    <!-- FontAwesome JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
     <script src="assets/js/main.js"></script>
 </body>
 </html>
