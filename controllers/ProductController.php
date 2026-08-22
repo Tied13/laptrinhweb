@@ -1,77 +1,85 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
 require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../models/User.php';
+require_once __DIR__ . '/../models/Product.php';
+require_once __DIR__ . '/../models/Category.php';
 
-$database = new Database();
-$db = $database->getConnection();
-$userModel = new User($db);
+class ProductController {
+    private $productModel;
+    private $categoryModel;
 
-$action = isset($_GET['action']) ? $_GET['action'] : '';
-
-// 1. Xử lý Đăng ký
-if ($action === 'register' && $_SERVER['REQUEST_METHOD'] === 'POST') {
-    $fullname = trim($_POST['fullname'] ?? '');
-    $username = trim($_POST['username'] ?? '');
-    $password = $_POST['password'] ?? '';
-    $email    = trim($_POST['email'] ?? '');
-    $phone    = trim($_POST['phone'] ?? '');
-    $address  = trim($_POST['address'] ?? '');
-
-    if (empty($fullname) || empty($username) || empty($password) || empty($email)) {
-        $_SESSION['error'] = "Vui lòng điền đầy đủ các trường bắt buộc!";
-        header("Location: ../register.php");
-        exit();
+    public function __construct() {
+        $database = new Database();
+        $db = $database->getConnection();
+        $this->productModel = new ProductModel($db);
+        $this->categoryModel = new CategoryModel($db);
     }
 
-    if ($userModel->findByUsername($username)) {
-        $_SESSION['error'] = "Tên đăng nhập đã tồn tại!";
-        header("Location: ../register.php");
-        exit();
+    public function index() {
+        $keyword = $_GET['search'] ?? '';
+        $category_id = isset($_GET['category_id']) ? (int)$_GET['category_id'] : 0;
+        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        $limit = 10;
+        $offset = ($page - 1) * $limit;
+
+        $products = $this->productModel->getAll($keyword, $category_id, $limit, $offset);
+        $total_items = $this->productModel->countAll($keyword, $category_id);
+        $total_pages = ceil($total_items / $limit);
+        $categories = $this->categoryModel->getAll();
+
+        return [
+            'products' => $products,
+            'categories' => $categories,
+            'total_pages' => $total_pages,
+            'current_page' => $page,
+            'keyword' => $keyword,
+            'category_id' => $category_id
+        ];
     }
 
-    if ($userModel->register($fullname, $username, $password, $email, $phone, $address)) {
-        $_SESSION['success'] = "Đăng ký thành công! Hãy đăng nhập.";
-        header("Location: ../login.php");
-    } else {
-        $_SESSION['error'] = "Đăng ký thất bại, vui lòng thử lại!";
-        header("Location: ../register.php");
-    }
-    exit();
-}
+    public function store() {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $name = $_POST['name'] ?? '';
+            $category_id = $_POST['category_id'] ?? 0;
+            $price = $_POST['price'] ?? 0;
+            $quantity = $_POST['quantity'] ?? 0;
+            $description = $_POST['description'] ?? '';
+            
+            $image = '';
+            if (isset($_FILES['image']) && $_FILES['image']['error'] === 0) {
+                $target_dir = "../assets/uploads/";
+                if (!file_exists($target_dir)) {
+                    mkdir($target_dir, 0777, true);
+                }
+                $file_extension = pathinfo($_FILES["image"]["name"], PATHINFO_EXTENSION);
+                $file_name = time() . '_' . uniqid() . '.' . $file_extension;
+                $target_file = $target_dir . $file_name;
+                
+                if (move_uploaded_file($_FILES["image"]["tmp_name"], $target_file)) {
+                    $image = $file_name;
+                }
+            }
 
-// 2. Xử lý Đăng nhập
-if ($action === 'login' && $_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = trim($_POST['username'] ?? '');
-    $password = $_POST['password'] ?? '';
-
-    $user = $userModel->findByUsername($username);
-
-    if ($user && password_verify($password, $user['password'])) {
-        if ($user['status'] == 0) {
-            $_SESSION['error'] = "Tài khoản của bạn đã bị khóa!";
-            header("Location: ../login.php");
+            if (!empty($_POST['id'])) {
+                $id = (int)$_POST['id'];
+                $img_update = !empty($image) ? $image : null;
+                $this->productModel->update($id, $name, $category_id, $price, $quantity, $description, $img_update);
+            } else {
+                $this->productModel->create($name, $category_id, $price, $quantity, $description, $image);
+            }
+            header('Location: products.php');
             exit();
         }
-
-        // Lưu thông tin vào Session
-        $_SESSION['user_id']   = $user['id'];
-        $_SESSION['fullname']  = $user['fullname'];
-        $_SESSION['username']  = $user['username'];
-        $_SESSION['role']      = (int)$user['role'];
-
-        if ($_SESSION['role'] === 1) {
-            header("Location: ../admin/index.php");
-        } else {
-            header("Location: ../index.php");
-        }
-    } else {
-        $_SESSION['error'] = "Sai tài khoản hoặc mật khẩu!";
-        header("Location: ../login.php");
     }
+
+    public function delete() {
+        if (isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['id'])) {
+            $id = (int)$_GET['id'];
+            $this->productModel->delete($id);
+            header('Location: products.php');
+            exit();
+        }
+    }
+
     // be3
     public function detail() {
         $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
@@ -92,7 +100,8 @@ if ($action === 'login' && $_SERVER['REQUEST_METHOD'] === 'POST') {
             echo "ID sản phẩm không hợp lệ!";
         }
     }
-// be3
+
+    // be3
     public function deleteImagesPhysical($product_id) {
         $images = $this->productModel->getProductImages($product_id);
         if (!empty($images)) {
@@ -103,13 +112,5 @@ if ($action === 'login' && $_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
     }
-    exit();
 }
-
-// 3. Xử lý Đăng xuất
-if ($action === 'logout') {
-    session_unset();
-    session_destroy();
-    header("Location: ../login.php");
-    exit();
-}
+?>
