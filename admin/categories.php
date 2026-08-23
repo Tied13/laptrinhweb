@@ -23,7 +23,16 @@ $success = $_SESSION['success'] ?? '';
 $error = $_SESSION['error'] ?? '';
 unset($_SESSION['success'], $_SESSION['error']);
 ?>
-<?php include __DIR__ . '/../includes/header.php'; ?>
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý danh mục</title>
+    <link rel="stylesheet" href="../assets/css/admin.css">
+</head>
+<body>
 <?php include __DIR__ . '/../includes/navbar_admin.php'; ?>
 
 <div class="admin-content">
@@ -94,4 +103,7 @@ unset($_SESSION['success'], $_SESSION['error']);
         </tbody>
     </table>
 </div>
-<?php include __DIR__ . '/../includes/footer.php'; ?>
+
+<script src="../assets/js/admin.js"></script>
+</body>
+</html>
