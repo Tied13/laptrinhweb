@@ -144,7 +144,6 @@ unset($_SESSION['success'], $_SESSION['error']);
                                         <span class="status-badge status-hidden">
                                             Ẩn
                                         </span>
-
                                     <?php endif; ?>
                                 </td>
                                 <td>
