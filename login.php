@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Đăng nhập - Cửa hàng bán Gấu bông</title>
-
     <link rel="stylesheet" href="assets/css/admin.css">
 </head>
 <body>
@@ -12,7 +11,7 @@
     <main class="auth-container">
         <section class="login">
             <h2>Đăng nhập</h2>
-            <form action="#" method="post">
+            <form action="controllers/AuthController.php" method="post">
                 <input type="text" name="username" placeholder="Tên đăng nhập" required />
                 <input type="password" name="password" placeholder="Mật khẩu" required />
                 <button type="submit">Đăng nhập</button>
