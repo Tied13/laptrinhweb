@@ -1,5 +1,14 @@
-<?php include '../includes/header.php'; ?>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý sản phẩm</title>
+    <link rel="stylesheet" href="../assets/css/admin.css">
+</head>
+<body>
 <?php include '../includes/navbar_admin.php'; ?>
+
 <div class="admin-content">
     <div class="admin-page-header">
         <h2>Quản lý sản phẩm</h2>
@@ -45,7 +54,7 @@
     <div class="admin-form-box">
         <h3><?php echo isset($product_edit['id']) ? 'Cập nhật sản phẩm' : 'Thêm sản phẩm mới'; ?></h3>
         <form action="../index.php?controller=product&action=store" method="POST" enctype="multipart/form-data">
-            // phần be2
+            // phần be 2
             <input type="hidden" name="id" value="<?php echo isset($product_edit['id']) ? $product_edit['id'] : ''; ?>">
             <div class="form-group">
                 <label>Tên sản phẩm:</label>
@@ -83,10 +92,11 @@
                 <label>Chọn nhiều ảnh phụ:</label>
                 <input type="file" name="images[]" multiple required>
             </div>
-
             <button type="submit" class="btn btn-primary">Lưu sản phẩm</button>
         </form>
     </div>
-
 </div>
-<?php include '../includes/footer.php'; ?>
+<script src="https://cdn.ckeditor.com/ckeditor5/41.0.0/classic/ckeditor.js"></script>
+<script src="../assets/js/admin.js"></script>
+</body>
+</html>
