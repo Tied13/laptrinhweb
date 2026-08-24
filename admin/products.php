@@ -60,7 +60,7 @@ if (!isset($_SESSION['role']) || (int)$_SESSION['role'] !== 1) {
     <div class="admin-form-box">
         <h3><?php echo isset($product_edit['id']) ? 'Cập nhật sản phẩm' : 'Thêm sản phẩm mới'; ?></h3>
         <form action="../index.php?controller=product&action=store" method="POST" enctype="multipart/form-data">
-            // phần be 2
+            <!-- phần be 2 -->
             <input type="hidden" name="id" value="<?php echo isset($product_edit['id']) ? (int)$product_edit['id'] : ''; ?>">
             <div class="form-group">
                 <label>Tên sản phẩm:</label>
@@ -81,7 +81,7 @@ if (!isset($_SESSION['role']) || (int)$_SESSION['role'] !== 1) {
                 <label>Giá sản phẩm:</label>
                 <input type="number" name="price" class="form-control" value="<?php echo isset($product_edit['price']) ? htmlspecialchars($product_edit['price']) : ''; ?>" required>
             </div>
-            // be 3
+            <!-- phần be 3 -->
             <div class="form-group">
                 <label>Ảnh đại diện sản phẩm:</label>
                 <input type="file" name="image" class="form-control">
