@@ -3,82 +3,54 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// --- BẢO MẬT & PHÂN QUYỀN (MIDDLEWARE) ---
-if (!isset($_SESSION['role']) || $_SESSION['role'] !== 1) {
-    $_SESSION['error'] = "Bạn không có quyền truy cập trang quản trị!";
-    header("Location: ../login.php");
-    exit();
-}
-
 require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../models/User.php';
 
-$database = new Database();
-$db = $database->getConnection();
-$userModel = new User($db);
+$action = $_GET['action'] ?? '';
 
-// Xử lý đổi trạng thái khóa tài khoản
-if (isset($_GET['toggle_id']) && isset($_GET['current_status'])) {
-    $userModel->toggleStatus($_GET['toggle_id'], $_GET['current_status']);
-    header("Location: users.php");
-    exit();
+if ($action === 'login' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $username = trim($_POST['username'] ?? '');
+    $password = $_POST['password'] ?? '';
+
+    $database = new Database();
+    $db = $database->getConnection();
+
+    $stmt = $db->prepare("SELECT * FROM users WHERE username = :username LIMIT 1");
+    $stmt->execute([':username' => $username]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    // Kiểm tra mật khẩu (Giả sử bạn dùng password_hash)
+    if ($user && password_verify($password, $user['password'])) {
+        
+        // Kiểm tra xem tài khoản có bị khóa không
+        if (isset($user['status']) && (int)$user['status'] === 0) {
+            $_SESSION['error'] = "Tài khoản của bạn đã bị khóa!";
+            header("Location: ../login.php");
+            exit();
+        }
+
+        // Lưu thông tin vào Session
+        $_SESSION['user_id'] = $user['id'];
+        $_SESSION['username'] = $user['username'];
+        $_SESSION['role'] = (int)$user['role'];
+
+        // Phân luồng trang đích dựa trên Role
+        if ($_SESSION['role'] === 1) {
+            header("Location: ../admin/products.php");
+        } else {
+            header("Location: ../index.php");
+        }
+        exit();
+    } else {
+        $_SESSION['error'] = "Sai tài khoản hoặc mật khẩu!";
+        header("Location: ../login.php");
+        exit();
+    }
 }
 
-$users = $userModel->getAllUsers();
-?>
-
-<!DOCTYPE html>
-<html lang="vi">
-
-<head>
-    <meta charset="UTF-8">
-    <title>Quản lý Người dùng - Admin</title>
-    <link rel="stylesheet" href="../assets/css/admin.css">
-</head>
-
-<body>
-    <div class="admin-container">
-        <?php include '../includes/navbar_admin.php'; ?>
-
-        <main class="admin-content">
-            <h2>Danh Sách Người Dùng</h2>
-            <table border="1" cellpadding="10" cellspacing="0" style="width: 100%; border-collapse: collapse;">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Họ tên</th>
-                        <th>Username</th>
-                        <th>Email</th>
-                        <th>Vai trò</th>
-                        <th>Trạng thái</th>
-                        <th>Hành động</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($users as $u): ?>
-                    <tr>
-                        <td><?= $u['id'] ?></td>
-                        <td><?= htmlspecialchars($u['fullname']) ?></td>
-                        <td><?= htmlspecialchars($u['username']) ?></td>
-                        <td><?= htmlspecialchars($u['email']) ?></td>
-                        <td><?= ($u['role'] == 1) ? '<strong>Admin</strong>' : 'Khách hàng' ?></td>
-                        <td><?= ($u['status'] == 1) ? '<span style="color:green">Hoạt động</span>' : '<span style="color:red">Đã khóa</span>' ?>
-                        </td>
-                        <td>
-                            <?php if ($u['role'] != 1): ?>
-                            <a href="users.php?toggle_id=<?= $u['id'] ?>&current_status=<?= $u['status'] ?>">
-                                <?= ($u['status'] == 1) ? 'Khóa' : 'Mở khóa' ?>
-                            </a>
-                            <?php else: ?>
-                            <em>Không thể khóa</em>
-                            <?php endif; ?>
-                        </td>
-                    </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        </main>
-    </div>
-</body>
-
-</html>
+// Xử lý Đăng xuất
+if ($action === 'logout') {
+    session_unset();
+    session_destroy();
+    header("Location: ../index.php");
+    exit();
+}

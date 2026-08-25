@@ -70,7 +70,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'edit' && !empty($_GET['id']))
                     <td><?php echo (int)$p['id']; ?></td>
                     <td>
                         <?php 
-                            $thumb = $p['thumbnail'] ?? '';
+                            $thumb = $p['thumbnail']  ?? ($p['image'] ?? '');;
                         ?>
                         <img src="../assets/uploads/products/<?php echo htmlspecialchars($thumb); ?>"
                             class="admin-thumb" width="60" height="60" style="object-fit: cover; border-radius: 4px;"
@@ -163,13 +163,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'edit' && !empty($_GET['id']))
     </div>
 
     <script src="https://cdn.ckeditor.com/ckeditor5/41.0.0/classic/ckeditor.js"></script>
-    <script>
-    ClassicEditor
-        .create(document.querySelector('#editor'))
-        .catch(error => {
-            console.error(error);
-        });
-    </script>
+
     <script src="../assets/js/admin.js"></script>
 </body>
 
