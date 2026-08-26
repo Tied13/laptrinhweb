@@ -163,8 +163,7 @@ if (!empty($_SESSION['cart'])) {
                         <?php echo number_format($row['price'], 0, ',', '.'); ?> VNĐ
                     </div>
 
-                    <a href="controllers/CartController.php?action=add&id=<?php echo $row['id']; ?>"
-                        class="btn-add-cart-grid">
+                    <a href="cart.php?action=add&id=<?php echo $row['id']; ?>" class="btn-add-cart-grid">
                         <i class="fa-solid fa-cart-shopping"></i> Thêm giỏ hàng
                     </a>
                 </div>
@@ -181,6 +180,7 @@ if (!empty($_SESSION['cart'])) {
     <!-- FontAwesome JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
     <script src="assets/js/main.js"></script>
+    <?php include("includes/footer.php"); ?>
 </body>
 
 </html>
