@@ -5,15 +5,21 @@ document.addEventListener('DOMContentLoaded', function () {
     setupAutoHideAlerts();
     setupOrderStatusBadge();
     setupCKEditor();
+    setupRevenueChart();
+    setupProductForm();
 });
 
 function setActiveMenu() {
-    const currentPage = window.location.pathname.split('/').pop() || 'index.php';
+    const currentPath = window.location.pathname;
     const links = document.querySelectorAll('.admin-menu a');
 
     links.forEach(function (link) {
-        const linkPage = link.getAttribute('href').split('/').pop();
-        if (linkPage === currentPage) {
+        const href = link.getAttribute('href');
+        if (!href || href.startsWith('../')) {
+            return;
+        }
+        const linkPage = href.split('/').pop();
+        if (currentPath.endsWith('/admin/' + linkPage)) {
             link.classList.add('active');
         }
     });
@@ -127,5 +133,74 @@ function setupCKEditor() {
             .catch(function (error) {
                 console.error('Lỗi khởi tạo CKEditor:', error);
             });
+    }
+}
+
+function setupRevenueChart() {
+    const chartElement = document.getElementById('revenueChart');
+
+    if (!chartElement || typeof Chart === 'undefined') return;
+
+    const weeklyRevenue = window.weeklyRevenue || [];
+
+    const labels = weeklyRevenue.map(item => item.date || '');
+    const revenueData = weeklyRevenue.map(item => Number(item.revenue || 0));
+
+    new Chart(chartElement, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Doanh thu',
+                data: revenueData,
+                borderWidth: 2,
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+function setupProductForm() {
+    const addBtn = document.getElementById('btn-add-product');
+    const closeBtn = document.getElementById('btn-close-product');
+    const cancelBtn = document.getElementById('btn-cancel-product');
+    const productForm = document.getElementById('product-form');
+
+    if (!addBtn || !productForm) return;
+
+    addBtn.addEventListener('click', function () {
+        productForm.classList.add('show');
+
+        productForm.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+        });
+    });
+
+    function closeProductForm() {
+        productForm.classList.remove('show');
+    }
+
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeProductForm);
+    }
+
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', closeProductForm);
     }
 }
