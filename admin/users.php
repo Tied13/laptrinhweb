@@ -34,6 +34,10 @@ $users = $userModel->getAllUsers();
 <div class="admin-content">
     <div class="admin-page-header">
         <h2>Danh sách người dùng</h2>
+        <a href="?controller=user&action=create" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i>
+            + Thêm người dùng
+        </a>
     </div>
     <table class="admin-table">
         <thead>
