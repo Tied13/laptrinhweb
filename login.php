@@ -11,7 +11,7 @@
     <main class="auth-container">
         <section class="login">
             <h2>Đăng nhập</h2>
-            <form action="controllers/AuthController.php" method="post">
+            <form action="controllers/AuthController.php?action=login" method="post">
                 <input type="text" name="username" placeholder="Tên đăng nhập" required />
                 <input type="password" name="password" placeholder="Mật khẩu" required />
                 <button type="submit">Đăng nhập</button>
