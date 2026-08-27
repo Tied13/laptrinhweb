@@ -56,6 +56,13 @@ $statusMap = [
             + Thêm đơn hàng
         </button>
     </div>
+<?php if ($success): ?>
+<div class="alert alert-success"><?= htmlspecialchars($success) ?></div>
+<?php endif; ?>
+
+<?php if ($error): ?>
+    <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
+<?php endif; ?>
     <div class="admin-section-title">
         <h3>Danh sách đơn hàng</h3>
     </div>
@@ -120,7 +127,7 @@ $statusMap = [
                             <?php echo $badge['label']; ?>
                         </span>
                         <form
-                            action="?controller=order&action=updateStatus"
+                            action="../controllers/OrderController.php?action=updateStatus"
                             method="POST"
                             class="status-form"
                         >
