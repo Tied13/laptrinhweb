@@ -59,15 +59,19 @@ $search_val = $_GET['search'] ?? ($_GET['keyword'] ?? '');
 <!-- Navigation Bar -->
 <nav>
     <div class="container nav-content">
-        <div class="category-btn">
-            <i class="fa-solid fa-bars"></i> DANH MỤC
-        </div>
+
+        <?php if (basename($_SERVER['PHP_SELF']) === 'products.php'): ?>
+            <div class="category-btn">
+                <i class="fa-solid fa-bars"></i> DANH MỤC
+            </div>
+        <?php endif; ?>
+
         <ul class="main-menu">
             <li><a href="index.php">Trang chủ</a></li>
             <li><a href="products.php">Sản phẩm</a></li>
-            <li><a href="#">Tin tức</a></li>
-            <li><a href="#">Giới thiệu</a></li>
+            <li><a href="about.php">Giới thiệu</a></li>
             <li><a href="contact.php">Liên hệ</a></li>
         </ul>
+
     </div>
 </nav>
