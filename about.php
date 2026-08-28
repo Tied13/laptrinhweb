@@ -21,7 +21,7 @@
 
             <div class="about-content">
                 <div class="about-left">
-                    <img src="images/about.jpg" alt="Gấu Bông Store">
+                    <img src="assets/uploads/products/about.jpg" alt="Gấu Bông Store">
                 </div>
                 <div class="about-right">
                     <h3>Lý Do Bạn Nên Chọn Gấu Bông Store</h3>
