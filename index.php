@@ -23,13 +23,6 @@ $categories = $categoryModel->getAll();
 // 3. Lấy tối đa 8 sản phẩm hiển thị trên Trang chủ
 $products = $productModel->getAll($search, $category_id, 8, 0);
 
-// 4. Đếm tổng số lượng sản phẩm trong Giỏ hàng
-$cart_count = 0;
-if (!empty($_SESSION['cart'])) {
-    foreach ($_SESSION['cart'] as $item) {
-        $cart_count += is_array($item) ? ($item['quantity'] ?? 1) : (int)$item;
-    }
-}
 ?>
 <!DOCTYPE html>
 <html lang="vi">
@@ -44,85 +37,11 @@ if (!empty($_SESSION['cart'])) {
 
 <body>
 
-    <!-- Header & Thanh Tìm Kiếm -->
-    <header>
-        <div class="container header-content">
-            <a href="index.php" class="logo">
-                <i class="fa-solid fa-heart"></i> Gấu Bông Store
-            </a>
-
-            <form action="index.php" method="GET" class="search-box">
-                <input type="text" name="search" placeholder="Nhập tên sản phẩm cần tìm..."
-                    value="<?php echo htmlspecialchars($search); ?>">
-                <button type="submit"><i class="fa-solid fa-magnifying-glass"></i> Tìm kiếm</button>
-            </form>
-
-            <div class="header-right">
-                <!-- Biểu tượng Giỏ hàng -->
-                <a href="cart.php" class="cart-icon-btn">
-                    <i class="fa-solid fa-bag-shopping"></i>
-                    <span class="cart-badge-num"><?php echo $cart_count; ?></span>
-                </a>
-
-                <!-- Trạng thái Tài khoản -->
-                <?php if (isset($_SESSION['username'])): ?>
-                <div class="user-logged-box" style="display: flex; align-items: center; gap: 8px;">
-                    <a href="<?php echo (isset($_SESSION['role']) && (int)$_SESSION['role'] === 1) ? 'admin/products.php' : '#'; ?>"
-                        class="user-account-btn">
-                        <i class="fa-regular fa-user"></i>
-                        <span><?php echo htmlspecialchars($_SESSION['username']); ?></span>
-                    </a>
-                    <a href="controllers/AuthController.php?action=logout"
-                        style="color: #888; font-size: 13px; text-decoration: none;">(Thoát)</a>
-                </div>
-                <?php else: ?>
-                <a href="login.php" class="user-account-btn">
-                    <i class="fa-regular fa-user"></i>
-                    <span>Đăng nhập</span>
-                </a>
-                <?php endif; ?>
-            </div>
-        </div>
-    </header>
-
-    <!-- Navigation Bar -->
-    <nav>
-        <div class="container nav-content">
-            <div class="category-btn">
-                <i class="fa-solid fa-bars"></i> DANH MỤC
-            </div>
-            <ul class="main-menu">
-                <li><a href="index.php">Trang chủ</a></li>
-                <li><a href="products.php">Sản phẩm</a></li>
-                <li><a href="#">Tin tức</a></li>
-                <li><a href="#">Giới thiệu</a></li>
-                <li><a href="#">Liên hệ</a></li>
-            </ul>
-        </div>
-    </nav>
+<?php include("includes/header.php"); ?>
 
     <!-- Hero Section (Sidebar & Banner Slide) -->
     <div class="container hero-section">
-        <!-- Sidebar Danh mục sản phẩm -->
-        <aside class="sidebar">
-            <ul>
-                <li>
-                    <a href="index.php" class="<?php echo $category_id === 0 ? 'active' : ''; ?>">
-                        <span>Tất cả sản phẩm</span> <i class="fa-solid fa-chevron-right"></i>
-                    </a>
-                </li>
-                <?php foreach ($categories as $cat_item): ?>
-                <li>
-                    <a href="index.php?category=<?php echo $cat_item['id']; ?>"
-                        class="<?php echo $category_id === (int)$cat_item['id'] ? 'active' : ''; ?>">
-                        <span><?php echo htmlspecialchars($cat_item['name']); ?></span> <i
-                            class="fa-solid fa-chevron-right"></i>
-                    </a>
-                </li>
-                <?php endforeach; ?>
-            </ul>
-        </aside>
-
+        
         <!-- Slider Banner -->
         <div class="slider-container">
             <div class="slide active" style="background-image: url('images/4.jpg');">
