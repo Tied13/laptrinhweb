@@ -8,7 +8,34 @@ if (!isset($_SESSION['role']) || (int)$_SESSION['role'] !== 1) {
     exit();
 }
 
-// == PHẦN BE4 ==
+//PHẦN BE4
+require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../models/Order.php';
+
+$database = new Database();
+$db = $database->getConnection();
+$orderModel = new Order($db);
+
+//1.Thống kê theo phân công: SUM() tổng doanh thu + COUNT() số đơn hàng
+$totalRevenue = $orderModel->getTotalRevenue();
+$totalOrders  = $orderModel->countOrders();
+
+//2.Hai ô thống kê còn lại: đếm sản phẩm & user
+$stmt = $db->prepare("SELECT COUNT(id) AS total FROM products");
+$stmt->execute();
+$row = $stmt->fetch();
+$totalProducts = $row['total'] ?? 0;
+
+$stmt = $db->prepare("SELECT COUNT(id) AS total FROM users");
+$stmt->execute();
+$row = $stmt->fetch();
+$totalUsers = $row['total'] ?? 0;
+
+// 3 Các panel mở rộng do FE2 vẽ thêm, ngoài phạm vi BE4 -> gán mặc định an toàn
+$recentOrders     = [];
+$lowStockProducts = [];
+$todayRevenue     = 0;
+$weeklyRevenue    = [];
 
 ?>
 <!DOCTYPE html>

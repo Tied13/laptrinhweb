@@ -8,7 +8,21 @@ if (!isset($_SESSION['role']) || (int)$_SESSION['role'] !== 1) {
     exit();
 }
 
-// == PHẦN BE4 ==
+//BE4
+require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../models/Order.php';
+
+$database = new Database();
+$db = $database->getConnection();
+$orderModel = new Order($db);
+
+// Lấy toàn bộ đơn hàng đổ ra bảng danh sách
+$orders = $orderModel->getAllOrders();
+
+// Đọc thông báo sau khi xử lý (flash message) rồi xóa khỏi session
+$success = $_SESSION['success'] ?? '';
+$error   = $_SESSION['error'] ?? '';
+unset($_SESSION['success'], $_SESSION['error']);
 
 $statusMap = [
     0 => ['label' => 'Chờ xử lý', 'class' => 'badge-pending'],
@@ -42,6 +56,13 @@ $statusMap = [
             + Thêm đơn hàng
         </button>
     </div>
+<?php if ($success): ?>
+<div class="alert alert-success"><?= htmlspecialchars($success) ?></div>
+<?php endif; ?>
+
+<?php if ($error): ?>
+    <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
+<?php endif; ?>
     <div class="admin-section-title">
         <h3>Danh sách đơn hàng</h3>
     </div>
@@ -106,7 +127,7 @@ $statusMap = [
                             <?php echo $badge['label']; ?>
                         </span>
                         <form
-                            action="?controller=order&action=updateStatus"
+                            action="../controllers/OrderController.php?action=updateStatus"
                             method="POST"
                             class="status-form"
                         >
