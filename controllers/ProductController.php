@@ -5,7 +5,12 @@ if (session_status() === PHP_SESSION_NONE) {
 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../models/Product.php';
+$products = $this->productModel->getAll();
+    
+    // Bổ sung: Lấy danh sách danh mục để truyền sang view
+    $categories = $this->categoryModel->getAll(); 
 
+    require_once '../views/admin/products.php';
 $database = new Database();
 $db = $database->getConnection();
 $productModel = new Product($db);

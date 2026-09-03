@@ -3,97 +3,98 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../models/Order.php';
+require_once __DIR__ . '/config/database.php';
+
+// 1. Kiểm tra trạng thái đăng nhập
+if (!isset($_SESSION['user']) && !isset($_SESSION['user_id'])) {
+    $_SESSION['redirect_url'] = 'checkout.php';
+    header('Location: login.php?msg=require_login');
+    exit();
+}
+
+// 2. Kiểm tra giỏ hàng
+if (empty($_SESSION['cart'])) {
+    header('Location: cart.php');
+    exit();
+}
 
 $database = new Database();
-$db = $database->getConnection();
-$orderModel = new Order($db);
+$conn = $database->getConnection();
+$user_id = $_SESSION['user_id'] ?? ($_SESSION['user']['id'] ?? null);
 
-$action = $_GET['action'] ?? '';
+$cart_products = [];
+$total_all = 0;
+$success_msg = '';
+$error_msg = '';
 
-// 1. Đặt hàng (Checkout): INSERT orders -> INSERT từng order_details -> xóa giỏ hàng
-if ($action === 'checkout' && $_SERVER['REQUEST_METHOD'] === 'POST') {
-    $ho_ten        = trim($_POST['ho_ten'] ?? '');
+// 3. Lấy dữ liệu sản phẩm trong giỏ & tính tổng tiền
+if (!empty($_SESSION['cart']) && $conn) {
+    $cart_ids = array_map('intval', array_keys($_SESSION['cart']));
+    $ids = implode(',', $cart_ids);
+
+    if (!empty($ids)) {
+        $stmt = $conn->query("SELECT * FROM products WHERE id IN ($ids)");
+        $cart_products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($cart_products as $item) {
+            $qty = $_SESSION['cart'][$item['id']] ?? 1;
+            $total_all += ($item['price'] * $qty);
+        }
+    }
+}
+
+// 4. Xử lý đặt hàng (POST)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btn_order'])) {
+    $ho_ten = trim($_POST['ho_ten'] ?? '');
     $so_dien_thoai = trim($_POST['so_dien_thoai'] ?? '');
-    $dia_chi       = trim($_POST['dia_chi'] ?? '');
+    $dia_chi = trim($_POST['dia_chi'] ?? '');
+    $ghi_chu = trim($_POST['ghi_chu'] ?? '');
 
-    // Giỏ hàng trống -> không có gì để đặt
-    if (empty($_SESSION['cart'])) {
-        header("Location: ../cart.php");
-        exit();
-    }
+    if (!empty($ho_ten) && !empty($so_dien_thoai) && !empty($dia_chi)) {
+        try {
+            $conn->beginTransaction();
 
-    // Thiếu thông tin giao hàng -> quay lại checkout
-    if ($ho_ten === '' || $so_dien_thoai === '' || $dia_chi === '') {
-        $_SESSION['error'] = "Vui lòng nhập đầy đủ Họ tên, SĐT và Địa chỉ!";
-        header("Location: ../checkout.php");
-        exit();
-    }
+            $sql_order = "INSERT INTO orders (user_id, customer_name, phone, address, note, total_money, status, created_at) 
+                          VALUES (:user_id, :name, :phone, :address, :note, :total, 'pending', NOW())";
+            $stmt = $conn->prepare($sql_order);
+            $stmt->execute([
+                ':user_id' => $user_id,
+                ':name'    => $ho_ten,
+                ':phone'   => $so_dien_thoai,
+                ':address' => $dia_chi,
+                ':note'    => $ghi_chu,
+                ':total'   => $total_all
+            ]);
+            $order_id = $conn->lastInsertId();
 
-    // Lấy giá thật từ DB để tính tổng tiền (không tin dữ liệu phía client)
-    $items = [];
-    $total = 0;
-    foreach ($_SESSION['cart'] as $product_id => $quantity) {
-        $stmt = $db->prepare("SELECT id, price FROM products WHERE id = :id");
-        $stmt->bindValue(':id', (int)$product_id, PDO::PARAM_INT);
-        $stmt->execute();
-        $p = $stmt->fetch();
-        if ($p) {
-            $qty = max(1, (int)$quantity);
-            $items[] = [
-                'product_id' => (int)$p['id'],
-                'quantity'   => $qty,
-                'price'      => $p['price']
-            ];
-            $total += $p['price'] * $qty;
+            $sql_detail = "INSERT INTO order_details (order_id, product_id, price, quantity, total_price) 
+                           VALUES (:order_id, :product_id, :price, :quantity, :total_price)";
+            $stmt_detail = $conn->prepare($sql_detail);
+
+            foreach ($cart_products as $p) {
+                $qty = $_SESSION['cart'][$p['id']] ?? 1;
+                $stmt_detail->execute([
+                    ':order_id'    => $order_id,
+                    ':product_id'  => $p['id'],
+                    ':price'       => $p['price'],
+                    ':quantity'    => $qty,
+                    ':total_price' => $p['price'] * $qty
+                ]);
+            }
+
+            $conn->commit();
+            unset($_SESSION['cart']);
+            $success_msg = "Đặt hàng thành công! Đơn hàng của bạn đang được xử lý. Cảm ơn bạn đã ủng hộ Gấu Bông Store.";
+        } catch (Exception $e) {
+            if ($conn->inTransaction()) {
+                $conn->rollBack();
+            }
+            $error_msg = "Có lỗi xảy ra: " . $e->getMessage();
         }
-    }
-
-    if (empty($items)) {
-        header("Location: ../cart.php");
-        exit();
-    }
-
-    // INSERT vào bảng orders, nhận về ID đơn vừa tạo
-    $user_id  = $_SESSION['user_id'] ?? null; // khách chưa đăng nhập -> NULL
-    $order_id = $orderModel->createOrder($user_id, $ho_ten, $so_dien_thoai, $dia_chi, $total);
-
-    if ($order_id) {
-        // Duyệt mảng giỏ hàng, INSERT từng item vào order_details
-        foreach ($items as $item) {
-            $orderModel->addOrderDetail($order_id, $item['product_id'], $item['quantity'], $item['price']);
-        }
-        // Xóa giỏ hàng sau khi đặt thành công
-        unset($_SESSION['cart']);
-        $_SESSION['success'] = "Đặt hàng thành công! Mã đơn hàng của bạn là #" . $order_id;
-        header("Location: ../index.php");
-        exit();
-    }
-
-    $_SESSION['error'] = "Đặt hàng thất bại, vui lòng thử lại!";
-    header("Location: ../checkout.php");
-    exit();
-}
-
-// 2. Admin cập nhật trạng thái đơn (0: Chờ xử lý, 1: Đang giao, 2: Hoàn thành, 3: Đã hủy)
-if ($action === 'updateStatus' && $_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Chặn người không phải Admin gọi thẳng URL này
-    if (!isset($_SESSION['role']) || (int)$_SESSION['role'] !== 1) {
-        $_SESSION['error'] = "Bạn không có quyền truy cập!";
-        header("Location: ../login.php");
-        exit();
-    }
-
-    $id     = (int)($_POST['id'] ?? 0);
-    $status = (int)($_POST['status'] ?? -1);
-
-    if ($id > 0 && $status >= 0 && $status <= 3) {
-        $orderModel->updateStatus($id, $status);
-        $_SESSION['success'] = "Đã cập nhật trạng thái đơn hàng #" . $id;
     } else {
-        $_SESSION['error'] = "Dữ liệu không hợp lệ!";
+        $error_msg = "Vui lòng điền đầy đủ các thông tin bắt buộc (*).";
     }
-    header("Location: ../admin/orders.php");
-    exit();
 }
+
+// 5. Nạp view hiển thị
+require_once __DIR__ . '/views/checkout.php';

@@ -7,45 +7,52 @@ if (!isset($_SESSION['role']) || (int)$_SESSION['role'] !== 1) {
     header('Location: ../login.php');
     exit();
 }
+
+// Khởi tạo mảng rỗng nếu controller chưa truyền biến này
+$categories = $categories ?? [];
+$products = $products ?? [];
+$product_edit = $product_edit ?? null;
 ?>
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản lý sản phẩm</title>
     <link rel="stylesheet" href="../assets/css/admin.css">
 </head>
+
 <body>
 
-<?php include '../includes/navbar_admin.php'; ?>
+    <?php include '../includes/navbar_admin.php'; ?>
 
-<div class="admin-content">
-    <div class="admin-page-header">
-        <h2>Quản lý sản phẩm</h2>
+    <div class="admin-content">
+        <div class="admin-page-header">
+            <h2>Quản lý sản phẩm</h2>
 
-        <button type="button" class="btn btn-primary" id="btn-add-product">
-            + Thêm sản phẩm
-        </button>
-    </div>
+            <button type="button" class="btn btn-primary" id="btn-add-product">
+                + Thêm sản phẩm
+            </button>
+        </div>
 
-    <div class="product-list-section">
-        <h3 class="section-title">Danh sách sản phẩm</h3>
+        <div class="product-list-section">
+            <h3 class="section-title">Danh sách sản phẩm</h3>
 
-        <table class="admin-table">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Ảnh</th>
-                    <th>Tên sản phẩm</th>
-                    <th>Danh mục</th>
-                    <th>Giá</th>
-                    <th>Thao tác</th>
-                </tr>
-            </thead>
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Ảnh</th>
+                        <th>Tên sản phẩm</th>
+                        <th>Danh mục</th>
+                        <th>Giá</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
 
-            <tbody>
-                <?php if (!empty($products)): ?>
+                <tbody>
+                    <?php if (!empty($products)): ?>
 
                     <?php foreach ($products as $p): ?>
 
@@ -55,11 +62,8 @@ if (!isset($_SESSION['role']) || (int)$_SESSION['role'] !== 1) {
                         </td>
 
                         <td>
-                            <img
-                                src="../assets/uploads/products/<?php echo htmlspecialchars($p['thumbnail']); ?>"
-                                class="admin-thumb"
-                                alt="<?php echo htmlspecialchars($p['name']); ?>"
-                            >
+                            <img src="../assets/uploads/products/<?php echo htmlspecialchars($p['thumbnail']); ?>"
+                                class="admin-thumb" alt="<?php echo htmlspecialchars($p['name']); ?>">
                         </td>
 
                         <td>
@@ -75,17 +79,13 @@ if (!isset($_SESSION['role']) || (int)$_SESSION['role'] !== 1) {
                         </td>
 
                         <td class="admin-actions">
-                            <a
-                                href="?controller=product&action=edit&id=<?php echo (int)$p['id']; ?>"
-                                class="btn btn-edit"
-                            >
+                            <a href="?controller=product&action=edit&id=<?php echo (int)$p['id']; ?>"
+                                class="btn btn-edit">
                                 Sửa
                             </a>
 
-                            <a
-                                href="?controller=product&action=delete&id=<?php echo (int)$p['id']; ?>"
-                                class="btn btn-delete btn-delete-confirm"
-                            >
+                            <a href="?controller=product&action=delete&id=<?php echo (int)$p['id']; ?>"
+                                class="btn btn-delete btn-delete-confirm">
                                 Xóa
                             </a>
                         </td>
@@ -93,7 +93,7 @@ if (!isset($_SESSION['role']) || (int)$_SESSION['role'] !== 1) {
 
                     <?php endforeach; ?>
 
-                <?php else: ?>
+                    <?php else: ?>
 
                     <tr>
                         <td colspan="6">
@@ -104,147 +104,108 @@ if (!isset($_SESSION['role']) || (int)$_SESSION['role'] !== 1) {
                         </td>
                     </tr>
 
-                <?php endif; ?>
-            </tbody>
-        </table>
-    </div>
-
-
-    <div class="admin-form-box product-form-box" id="product-form">
-
-        <div class="product-form-header">
-            <h3>
-                <?php echo isset($product_edit['id'])
-                    ? 'Cập nhật sản phẩm'
-                    : 'Thêm sản phẩm mới'; ?>
-            </h3>
-
-            <button type="button" class="form-close-btn" id="btn-close-product">
-                ×
-            </button>
+                    <?php endif; ?>
+                </tbody>
+            </table>
         </div>
 
-        <form
-            action="../index.php?controller=product&action=store"
-            method="POST"
-            enctype="multipart/form-data"
-        >
 
-            <!-- PHẦN BE2 -->
-            <input
-                type="hidden"
-                name="id"
-                value="<?php echo isset($product_edit['id'])
-                    ? (int)$product_edit['id']
-                    : ''; ?>"
-            >
+        <div class="admin-form-box product-form-box" id="product-form">
 
-            <div class="form-group">
-                <label>Tên sản phẩm:</label>
+            <div class="product-form-header">
+                <h3>
+                    <?php echo isset($product_edit['id'])
+                    ? 'Cập nhật sản phẩm'
+                    : 'Thêm sản phẩm mới'; ?>
+                </h3>
 
-                <input
-                    type="text"
-                    name="name"
-                    class="form-control"
-                    value="<?php echo isset($product_edit['name'])
-                        ? htmlspecialchars($product_edit['name'])
-                        : ''; ?>"
-                    required
-                >
+                <button type="button" class="form-close-btn" id="btn-close-product">
+                    ×
+                </button>
             </div>
 
-            <div class="form-group">
-                <label>Danh mục:</label>
+            <form action="../index.php?controller=product&action=store" method="POST" enctype="multipart/form-data">
 
-                <select name="category_id" class="form-control" required>
-                    <option value="">-- Chọn danh mục --</option>
+                <!-- PHẦN BE2 -->
+                <input type="hidden" name="id" value="<?php echo isset($product_edit['id'])
+                    ? (int)$product_edit['id']
+                    : ''; ?>">
 
-                    <?php foreach ($categories as $cat): ?>
+                <div class="form-group">
+                    <label>Tên sản phẩm:</label>
 
-                        <option
-                            value="<?php echo (int)$cat['id']; ?>"
-                            <?php echo (
+                    <input type="text" name="name" class="form-control" value="<?php echo isset($product_edit['name'])
+                        ? htmlspecialchars($product_edit['name'])
+                        : ''; ?>" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Danh mục:</label>
+
+                    <select name="category_id" class="form-control" required>
+                        <option value="">-- Chọn danh mục --</option>
+
+                        <?php foreach ($categories as $cat): ?>
+
+                        <option value="<?php echo (int)$cat['id']; ?>" <?php echo (
                                 isset($product_edit['category_id']) &&
                                 $product_edit['category_id'] == $cat['id']
-                            ) ? 'selected' : ''; ?>
-                        >
+                            ) ? 'selected' : ''; ?>>
                             <?php echo htmlspecialchars($cat['name']); ?>
                         </option>
 
-                    <?php endforeach; ?>
-                </select>
-            </div>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
 
-            <div class="form-group">
-                <label>Giá sản phẩm:</label>
+                <div class="form-group">
+                    <label>Giá sản phẩm:</label>
 
-                <input
-                    type="number"
-                    name="price"
-                    class="form-control"
-                    value="<?php echo isset($product_edit['price'])
+                    <input type="number" name="price" class="form-control" value="<?php echo isset($product_edit['price'])
                         ? htmlspecialchars($product_edit['price'])
-                        : ''; ?>"
-                    required
-                >
-            </div>
+                        : ''; ?>" required>
+                </div>
 
 
-            <!-- PHẦN BE3 -->
-            <div class="form-group">
-                <label>Ảnh đại diện sản phẩm:</label>
+                <!-- PHẦN BE3 -->
+                <div class="form-group">
+                    <label>Ảnh đại diện sản phẩm:</label>
 
-                <input
-                    type="file"
-                    name="image"
-                    class="form-control"
-                >
-            </div>
+                    <input type="file" name="image" class="form-control">
+                </div>
 
-            <div class="form-group">
-                <label>Mô tả chi tiết:</label>
+                <div class="form-group">
+                    <label>Mô tả chi tiết:</label>
 
-                <textarea
-                    name="description"
-                    id="editor"
-                    class="form-control"
-                ><?php echo isset($product_edit['description'])
+                    <textarea name="description" id="editor" class="form-control"><?php echo isset($product_edit['description'])
                     ? htmlspecialchars($product_edit['description'])
                     : ''; ?></textarea>
-            </div>
+                </div>
 
-            <div class="form-group">
-                <label>Chọn nhiều ảnh phụ:</label>
+                <div class="form-group">
+                    <label>Chọn nhiều ảnh phụ:</label>
 
-                <input
-                    type="file"
-                    name="images[]"
-                    multiple
-                    required
-                >
-            </div>
+                    <input type="file" name="images[]" multiple required>
+                </div>
 
-            <div class="product-form-actions">
-                <button type="submit" class="btn btn-primary">
-                    Lưu sản phẩm
-                </button>
+                <div class="product-form-actions">
+                    <button type="submit" class="btn btn-primary">
+                        Lưu sản phẩm
+                    </button>
 
-                <button
-                    type="button"
-                    class="btn btn-cancel"
-                    id="btn-cancel-product"
-                >
-                    Hủy
-                </button>
-            </div>
+                    <button type="button" class="btn btn-cancel" id="btn-cancel-product">
+                        Hủy
+                    </button>
+                </div>
 
-        </form>
+            </form>
+        </div>
+
     </div>
 
-</div>
-
-<script src="https://cdn.ckeditor.com/ckeditor5/41.0.0/classic/ckeditor.js"></script>
-<script src="../assets/js/admin.js"></script>
+    <script src="https://cdn.ckeditor.com/ckeditor5/41.0.0/classic/ckeditor.js"></script>
+    <script src="../assets/js/admin.js"></script>
 
 </body>
+
 </html>
