@@ -1,5 +1,5 @@
-CREATE DATABASE IF NOT EXISTS toanbangau_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE  toanbangau_db;
+CREATE DATABASE IF NOT EXISTS bangaubong_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE  bangaubong_db;
 
 -- 1. Bảng Users
 CREATE TABLE IF NOT EXISTS users (
