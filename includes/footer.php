@@ -7,7 +7,7 @@
                 <i class="fa-solid fa-heart"></i> La Beaute Store
             </h2>
             <p>
-                Chuyên cung cấp gấu bông mềm mại, đa dạng mẫu mã, phù hợp làm quà tặng.
+                Chuyên cung cấp gấu bông mềm mại, đa dạng mẫu mã, phù hợp làm quà tặng
             </p>
             <div class="socials">
                 <a href="#" title="Facebook">
@@ -26,7 +26,7 @@
                 <p class="footer-col-title">Thông tin liên hệ</p>
                 <p>📍 Võ Oanh, Phường Thạnh Mỹ Tây, TP. Hồ Chí Minh</p>
                 <p>📞 0123 456 789</p>
-                <p>📧 cskh@cuahangbangaubong.vn</p>
+                <p>📧 cskh@labeautestore.vn</p>
             </div>
 
             <!-- Liên kết nhanh -->
@@ -50,7 +50,7 @@
     <div class="footer-bottom">
         <div class="container">
             <p class="copyright">
-                &copy; <?php echo date('Y'); ?> Cửa hàng gấu bông. Tất cả các quyền được bảo lưu.
+                &copy; <?php echo date('Y'); ?> La Beaute Store. Tất cả các quyền được bảo lưu.
             </p>
         </div>
     </div>
