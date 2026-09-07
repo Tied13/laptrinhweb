@@ -16,7 +16,7 @@
         <section class="contact-section about-section">
             <h2 class="contact-title">Giới Thiệu</h2>
             <p class="contact-intro">
-                Câu chuyện phía sau Gấu Bông Store
+                Câu chuyện phía sau La Beaute Store
             </p>
 
             <div class="about-content">
@@ -24,7 +24,7 @@
                     <img src="assets/uploads/products/about.jpg" alt="Gấu Bông Store">
                 </div>
                 <div class="about-right">
-                    <h3>Lý Do Bạn Nên Chọn Gấu Bông Store</h3>
+                    <h3>Lý Do Bạn Nên Chọn La Beaute Store</h3>
                     <p>
                         Gấu Bông Store là cửa hàng chuyên cung cấp các mẫu gấu bông và thú nhồi bông
                         đáng yêu cho mọi lứa tuổi, mọi dịp lễ. Với phương châm "Trao yêu thương qua từng
