@@ -33,15 +33,36 @@ $products = $productModel->getAll($search, $category_id, 8, 0);
     <title>Trang Chủ - Gấu Bông Store</title>
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+    .product-card {
+        position: relative;
+    }
+
+    /* Ô phủ ảo trong suốt trùm lên toàn bộ vùng ảnh và thông tin */
+    .product-click-overlay {
+        position: absolute;
+        inset: 0;
+        bottom: 60px;
+        /* Chừa lại phần đáy cho nút thêm giỏ hàng */
+        z-index: 1;
+        cursor: pointer;
+    }
+
+    /* Nổi nút giỏ hàng lên trên ô ảo để click độc lập */
+    .btn-add-cart-grid {
+        position: relative;
+        z-index: 2;
+    }
+    </style>
 </head>
 
 <body>
 
-<?php include("includes/header.php"); ?>
+    <?php include("includes/header.php"); ?>
 
     <!-- Hero Section (Sidebar & Banner Slide) -->
     <div class="container hero-section">
-        
+
         <!-- Slider Banner -->
         <div class="slider-container">
             <div class="slide active" style="background-image: url('images/4.jpg');">
@@ -62,27 +83,35 @@ $products = $productModel->getAll($search, $category_id, 8, 0);
 
             <div class="product-grid">
                 <?php if (!empty($products)): ?>
-                <?php foreach ($products as $row): ?>
+                <?php foreach ($products as $row): 
+                    $thumb = $row['thumbnail'] ?? ($row['image'] ?? '');
+                    $detailLink = "product-detail.php?id=" . $row['id'];
+                    $isLoggedIn = isset($_SESSION['user']) || isset($_SESSION['user_id']);
+                    $cartLink = $isLoggedIn 
+                        ? "cart.php?action=add&id=" . $row['id'] 
+                        : "login.php?redirect=" . urlencode("cart.php?action=add&id=" . $row['id']);
+                ?>
                 <div class="product-card">
+                    <!-- Ô phủ ảo trong suốt dẫn tới trang chi tiết -->
+                    <a href="<?php echo $detailLink; ?>" class="product-click-overlay"
+                        aria-label="<?php echo htmlspecialchars($row['name']); ?>"></a>
+
                     <div class="product-img-wrapper">
                         <span class="badge-sale">Sale 20%</span>
-                        <?php 
-                                    $thumb = $row['thumbnail'] ?? ($row['image'] ?? '');
-                                ?>
                         <img src="assets/uploads/products/<?php echo htmlspecialchars($thumb); ?>"
                             onerror="this.src='https://via.placeholder.com/300x300?text=No+Image';"
                             alt="<?php echo htmlspecialchars($row['name']); ?>">
                     </div>
 
-                    <a href="product-detail.php?id=<?php echo $row['id']; ?>" class="product-title">
+                    <div class="product-title">
                         <?php echo htmlspecialchars($row['name']); ?>
-                    </a>
+                    </div>
 
                     <div class="product-price">
                         <?php echo number_format($row['price'], 0, ',', '.'); ?> VNĐ
                     </div>
 
-                    <a href="cart.php?action=add&id=<?php echo $row['id']; ?>" class="btn-add-cart-grid">
+                    <a href="<?php echo $cartLink; ?>" class="btn-add-cart-grid">
                         <i class="fa-solid fa-cart-shopping"></i> Thêm giỏ hàng
                     </a>
                 </div>

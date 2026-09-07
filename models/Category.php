@@ -57,5 +57,16 @@ class Category
         $stmt->bindValue(':id', (int)$id, PDO::PARAM_INT);
         return $stmt->execute();
     }
-}
 
+    // Hàm lấy danh sách sản phẩm phục vụ giỏ hàng an toàn với Prepared Statement
+    public function getProductsByIds(array $ids): array
+    {
+        if (empty($ids)) {
+            return [];
+        }
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $stmt = $this->conn->prepare("SELECT * FROM products WHERE id IN ($placeholders)");
+        $stmt->execute(array_values($ids));
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+}

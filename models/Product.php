@@ -53,7 +53,6 @@ class Product {
         
         $sql .= " ORDER BY p.id DESC";
 
-        // Chỉ áp dụng LIMIT và OFFSET khi có truyền limit > 0
         if ($limit > 0) {
             $sql .= " LIMIT :limit OFFSET :offset";
         }
@@ -100,6 +99,14 @@ class Product {
         $stmt->execute();
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         return $row ? (int)$row['total'] : 0;
+    }
+
+    // Lấy danh mục đang hoạt động
+    public function getCategories() {
+        $sql = "SELECT * FROM categories WHERE status = 1 ORDER BY id ASC";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     // Tạo mới sản phẩm
@@ -149,16 +156,13 @@ class Product {
 
     // Xóa sản phẩm và dọn sạch bảng gallery liên quan
     public function delete($id) {
-        // 1. Xóa ảnh phụ trong bảng product_images trước
         $stmt_img = $this->conn->prepare("DELETE FROM product_images WHERE product_id = :id");
         $stmt_img->bindValue(':id', (int)$id, PDO::PARAM_INT);
         $stmt_img->execute();
 
-        // 2. Xóa sản phẩm chính
         $sql = "DELETE FROM " . $this->table . " WHERE id = :id";
         $stmt = $this->conn->prepare($sql);
         $stmt->bindValue(':id', (int)$id, PDO::PARAM_INT);
         return $stmt->execute();
     }
 }
-?>

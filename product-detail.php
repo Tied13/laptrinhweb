@@ -4,16 +4,33 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 require_once __DIR__ . '/config/database.php';
+
+// Tự động kiểm tra file Model Product
+if (file_exists(__DIR__ . '/models/Product.php')) {
+    require_once __DIR__ . '/models/Product.php';
+} elseif (file_exists(__DIR__ . '/Product.php')) {
+    require_once __DIR__ . '/Product.php';
+}
+
 $database = new Database();
 $conn = $database->getConnection();
 
 $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 $product = null;
+$gallery_images = [];
 
 if ($conn && $id > 0) {
-    $stmt = $conn->prepare("SELECT * FROM products WHERE id = :id");
-    $stmt->execute([':id' => $id]);
-    $product = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (class_exists('Product')) {
+        $productModel = new Product($conn);
+        $product = $productModel->getProductById($id);
+        if (method_exists($productModel, 'getProductImages')) {
+            $gallery_images = $productModel->getProductImages($id);
+        }
+    } else {
+        $stmt = $conn->prepare("SELECT * FROM products WHERE id = :id LIMIT 1");
+        $stmt->execute([':id' => $id]);
+        $product = $stmt->fetch(PDO::FETCH_ASSOC);
+    }
 }
 
 if (!$product) {
@@ -51,11 +68,45 @@ $thumb = $product['thumbnail'] ?? ($product['image'] ?? '');
         object-fit: cover;
         border-radius: 12px;
         border: 1px solid #f3e8ff;
+        transition: all 0.3s ease;
+    }
+
+    .gallery-thumbnails {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+        flex-wrap: wrap;
+    }
+
+    .gallery-item {
+        width: 70px;
+        height: 70px;
+        border-radius: 8px;
+        object-fit: cover;
+        border: 2px solid transparent;
+        cursor: pointer;
+        transition: border-color 0.2s;
+    }
+
+    .gallery-item:hover,
+    .gallery-item.active {
+        border-color: #a855f7;
     }
 
     .product-info h1 {
         font-size: 26px;
         color: #333;
+        margin-bottom: 10px;
+    }
+
+    .category-badge {
+        display: inline-block;
+        background: #f3e8ff;
+        color: #9333ea;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 600;
         margin-bottom: 15px;
     }
 
@@ -144,23 +195,44 @@ $thumb = $product['thumbnail'] ?? ($product['image'] ?? '');
 
     <div class="container">
         <div class="detail-card">
-            <!-- Cột hình ảnh -->
+            <!-- Cột hình ảnh & Gallery -->
             <div class="main-img-box">
                 <img id="mainImg" src="assets/uploads/products/<?php echo htmlspecialchars($thumb); ?>"
                     onerror="this.src='https://via.placeholder.com/450x450?text=No+Image';"
                     alt="<?php echo htmlspecialchars($product['name']); ?>">
+
+                <?php if (!empty($gallery_images)): ?>
+                <div class="gallery-thumbnails">
+                    <!-- Ảnh chính -->
+                    <img src="assets/uploads/products/<?php echo htmlspecialchars($thumb); ?>"
+                        class="gallery-item active" onclick="changeImage(this)"
+                        onerror="this.src='https://via.placeholder.com/70x70?text=No+Image';" alt="Thumbnail Chính">
+
+                    <!-- Các ảnh phụ -->
+                    <?php foreach ($gallery_images as $img): ?>
+                    <img src="assets/uploads/products/<?php echo htmlspecialchars($img['image_url']); ?>"
+                        class="gallery-item" onclick="changeImage(this)"
+                        onerror="this.src='https://via.placeholder.com/70x70?text=No+Image';" alt="Ảnh phụ">
+                    <?php endforeach; ?>
+                </div>
+                <?php endif; ?>
             </div>
 
             <!-- Cột thông tin sản phẩm -->
             <div class="product-info">
+                <?php if (!empty($product['category_name'])): ?>
+                <span class="category-badge"><?php echo htmlspecialchars($product['category_name']); ?></span>
+                <?php endif; ?>
+
                 <h1><?php echo htmlspecialchars($product['name']); ?></h1>
 
                 <div class="detail-price">
                     <?php echo number_format($product['price'], 0, ',', '.'); ?> VNĐ
                 </div>
 
-                <form action="cart.php" method="POST" id="cartForm">
-                    <input type="hidden" name="product_id" value="<?php echo $product['id']; ?>">
+                <!-- Form gửi sang cart.php có kèm ?action=add để Controller nhận dạng ngay -->
+                <form action="cart.php?action=add" method="POST" id="cartForm">
+                    <input type="hidden" name="product_id" value="<?php echo (int)$product['id']; ?>">
 
                     <div class="quantity-wrapper">
                         <label style="font-weight: 600; margin-right: 10px;">Số lượng:</label>
@@ -197,6 +269,7 @@ $thumb = $product['thumbnail'] ?? ($product['image'] ?? '');
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
     <script src="assets/js/main.js"></script>
     <script>
+    // Tăng giảm số lượng
     const inputQty = document.getElementById('inputQty');
     const btnMinus = document.getElementById('btnMinus');
     const btnPlus = document.getElementById('btnPlus');
@@ -213,6 +286,16 @@ $thumb = $product['thumbnail'] ?? ($product['image'] ?? '');
             let current = parseInt(inputQty.value) || 1;
             inputQty.value = current + 1;
         });
+    }
+
+    // Đổi ảnh khi nhấn vào danh sách ảnh Gallery
+    function changeImage(el) {
+        const mainImg = document.getElementById('mainImg');
+        if (mainImg && el) {
+            mainImg.src = el.src;
+            document.querySelectorAll('.gallery-item').forEach(item => item.classList.remove('active'));
+            el.classList.add('active');
+        }
     }
     </script>
 </body>

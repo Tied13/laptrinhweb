@@ -18,8 +18,11 @@ $search_val = $_GET['search'] ?? ($_GET['keyword'] ?? '');
 <!-- Header & Thanh Tìm Kiếm -->
 <header>
     <div class="container header-content">
-        <a href="index.php" class="logo">
-            <i class="fa-solid fa-heart"></i> Gấu Bông Store
+        <!-- Khối Thương hiệu: Gom Tên và Logo sát nhau -->
+        <a href="index.php" class="logo"
+            style="display: inline-flex; align-items: center; gap: 0px; text-decoration: none;">
+            <span style="color: #bc02ad; font-weight: 600;">La Beaute Store</span>
+            <img src="assets/uploads/logo.png" alt="Logo" style="height: 70px; width: auto; object-fit: contain;">
         </a>
 
         <form action="products.php" method="GET" class="search-box">
@@ -61,9 +64,9 @@ $search_val = $_GET['search'] ?? ($_GET['keyword'] ?? '');
     <div class="container nav-content">
 
         <?php if (basename($_SERVER['PHP_SELF']) === 'products.php'): ?>
-            <div class="category-btn">
-                <i class="fa-solid fa-bars"></i> DANH MỤC
-            </div>
+        <div class="category-btn">
+            <i class="fa-solid fa-bars"></i> DANH MỤC
+        </div>
         <?php endif; ?>
 
         <ul class="main-menu">

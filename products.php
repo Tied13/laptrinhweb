@@ -3,10 +3,18 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// 1. Kết nối CSDL chuẩn PDO qua config
+// 1. Kết nối CSDL & Nạp Model
 require_once __DIR__ . '/config/database.php';
+// Tự động kiểm tra vị trí file Product.php (trong thư mục models/ hoặc cùng thư mục)
+if (file_exists(__DIR__ . '/models/Product.php')) {
+    require_once __DIR__ . '/models/Product.php';
+} else {
+    require_once __DIR__ . '/Product.php';
+}
+
 $database = new Database();
 $conn = $database->getConnection();
+$productModel = new Product($conn);
 
 // 2. Cấu hình phân trang
 $limit = 8;
@@ -17,47 +25,18 @@ $offset = ($page - 1) * $limit;
 $category_id = isset($_GET['category']) ? intval($_GET['category']) : 0;
 $search = isset($_GET['search']) ? trim($_GET['search']) : '';
 
-// 4. Lấy danh sách Danh mục
-$stmt_cat = $conn->prepare("SELECT * FROM categories WHERE status = 1 ORDER BY id ASC");
-$stmt_cat->execute();
-$categories = $stmt_cat->fetchAll(PDO::FETCH_ASSOC);
+// 4. Lấy danh mục qua Model (hoặc query nếu hàm chưa có)
+$categories = method_exists($productModel, 'getCategories') 
+    ? $productModel->getCategories() 
+    : $conn->query("SELECT * FROM categories WHERE status = 1 ORDER BY id ASC")->fetchAll(PDO::FETCH_ASSOC);
 
-// 5. Xây dựng điều kiện lọc sản phẩm
-$where_clauses = [];
-$params = [];
-
-if (!empty($search)) {
-    $where_clauses[] = "name LIKE :search";
-    $params[':search'] = "%{$search}%";
-}
-
-if ($category_id > 0) {
-    $where_clauses[] = "category_id = :category_id";
-    $params[':category_id'] = $category_id;
-}
-
-$where_sql = count($where_clauses) > 0 ? " WHERE " . implode(' AND ', $where_clauses) : "";
-
-// 6. Tính tổng số sản phẩm để chia trang
-$sql_count = "SELECT COUNT(*) as total FROM products" . $where_sql;
-$stmt_count = $conn->prepare($sql_count);
-$stmt_count->execute($params);
-$total_products = (int)($stmt_count->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
-
+// 5. Đếm tổng số và phân trang bằng hàm countAll() của Model
+$total_products = $productModel->countAll($search, $category_id);
 $total_pages = ceil($total_products / $limit);
 if ($total_pages < 1) $total_pages = 1;
 
-// 7. Lấy danh sách sản phẩm theo trang
-$sql_prod = "SELECT * FROM products" . $where_sql . " ORDER BY id DESC LIMIT :limit OFFSET :offset";
-$stmt_prod = $conn->prepare($sql_prod);
-
-foreach ($params as $k => $v) { 
-    $stmt_prod->bindValue($k, $v); 
-}
-$stmt_prod->bindValue(':limit', $limit, PDO::PARAM_INT);
-$stmt_prod->bindValue(':offset', $offset, PDO::PARAM_INT);
-$stmt_prod->execute();
-$products = $stmt_prod->fetchAll(PDO::FETCH_ASSOC);
+// 6. Lấy danh sách sản phẩm bằng hàm getAll() của Model
+$products = $productModel->getAll($search, $category_id, $limit, $offset);
 
 // Tham số giữ lại khi bấm chuyển trang
 $pagination_query = "";
@@ -73,6 +52,27 @@ if (!empty($search)) $pagination_query .= "&search=" . urlencode($search);
     <title>Cửa Hàng - Gấu Bông Store</title>
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+    .product-card {
+        position: relative;
+    }
+
+    /* Ô phủ ảo trong suốt trùm lên toàn bộ vùng ảnh và thông tin */
+    .product-click-overlay {
+        position: absolute;
+        inset: 0;
+        bottom: 60px;
+        /* Chừa lại phần đáy cho nút thêm giỏ hàng */
+        z-index: 1;
+        cursor: pointer;
+    }
+
+    /* Nổi nút giỏ hàng lên trên ô ảo để click độc lập */
+    .product-actions {
+        position: relative;
+        z-index: 2;
+    }
+    </style>
 </head>
 
 <body>
@@ -109,8 +109,13 @@ if (!empty($search)) $pagination_query .= "&search=" . urlencode($search);
                         $cartLink = $isLoggedIn 
                             ? "cart.php?action=add&id=" . $row['id'] 
                             : "login.php?redirect=" . urlencode("cart.php?action=add&id=" . $row['id']);
+                        $detailLink = "product-detail.php?id=" . $row['id'];
                     ?>
                 <div class="product-card">
+                    <!-- Ô phủ ảo trong suốt dẫn tới trang chi tiết -->
+                    <a href="<?php echo $detailLink; ?>" class="product-click-overlay"
+                        aria-label="<?php echo htmlspecialchars($row['name']); ?>"></a>
+
                     <span class="badge-sale">Sale 20%</span>
                     <div class="product-img-wrapper">
                         <img src="assets/uploads/products/<?php echo htmlspecialchars($thumb); ?>"
@@ -118,9 +123,9 @@ if (!empty($search)) $pagination_query .= "&search=" . urlencode($search);
                             alt="<?php echo htmlspecialchars($row['name']); ?>">
                     </div>
 
-                    <a href="product-detail.php?id=<?php echo $row['id']; ?>" class="product-title">
+                    <div class="product-title">
                         <?php echo htmlspecialchars($row['name']); ?>
-                    </a>
+                    </div>
 
                     <div class="product-price">
                         <?php echo number_format($row['price'], 0, ',', '.'); ?> VNĐ

@@ -1,7 +1,7 @@
 <!-- includes/navbar_admin.php -->
 <aside class="admin-sidebar">
     <div class="admin-logo">
-        <h2>Cửa hàng gấu bông</h2>
+        <h2>La Beaute Store</h2>
     </div>
     <!-- Menu Admin -->
     <nav class="admin-menu">

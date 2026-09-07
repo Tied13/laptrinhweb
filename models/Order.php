@@ -6,6 +6,7 @@ class Order {
     public function __construct($db) {
         $this->conn = $db;
     }
+
     // Tạo đơn hàng mới, trả về ID đơn vừa tạo
     public function createOrder($user_id, $customer_name, $customer_phone, $customer_address, $total_price) {
         $query = "INSERT INTO " . $this->table . " (user_id, customer_name, customer_phone, customer_address, total_price, status)
@@ -28,7 +29,8 @@ class Order {
         }
         return false;
     }
-        // Thêm 1 sản phẩm vào chi tiết đơn hàng
+
+    // Thêm 1 sản phẩm vào chi tiết đơn hàng
     public function addOrderDetail($order_id, $product_id, $quantity, $price) {
         $query = "INSERT INTO order_details (order_id, product_id, quantity, price)
                   VALUES (:order_id, :product_id, :quantity, :price)";
@@ -41,14 +43,52 @@ class Order {
 
         return $stmt->execute();
     }
-        // Lấy toàn bộ đơn hàng cho trang Admin
+
+    // Lấy toàn bộ đơn hàng cho trang Admin
     public function getAllOrders() {
         $query = "SELECT * FROM " . $this->table . " ORDER BY id DESC";
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
         return $stmt->fetchAll();
     }
-        // Cập nhật trạng thái đơn hàng (0: Chờ xử lý, 1: Đang giao, 2: Hoàn thành, 3: Đã hủy)
+
+    // Lấy thông tin 1 đơn hàng theo ID
+    public function getOrderById($id) {
+        $query = "SELECT * FROM " . $this->table . " WHERE id = :id LIMIT 1";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":id", $id);
+        $stmt->execute();
+        return $stmt->fetch();
+    }
+
+    // Xóa đơn hàng cùng chi tiết đơn hàng
+    public function deleteOrder($id) {
+        try {
+            $this->conn->beginTransaction();
+
+            // 1. Xóa các sản phẩm trong bảng chi tiết đơn hàng trước
+            $queryDetails = "DELETE FROM order_details WHERE order_id = :order_id";
+            $stmtDetails = $this->conn->prepare($queryDetails);
+            $stmtDetails->bindParam(":order_id", $id);
+            $stmtDetails->execute();
+
+            // 2. Xóa đơn hàng trong bảng orders
+            $queryOrder = "DELETE FROM " . $this->table . " WHERE id = :id";
+            $stmtOrder = $this->conn->prepare($queryOrder);
+            $stmtOrder->bindParam(":id", $id);
+            $stmtOrder->execute();
+
+            $this->conn->commit();
+            return true;
+        } catch (Exception $e) {
+            if ($this->conn->inTransaction()) {
+                $this->conn->rollBack();
+            }
+            return false;
+        }
+    }
+
+    // Cập nhật trạng thái đơn hàng (0: Chờ xử lý, 1: Đang giao, 2: Hoàn thành, 3: Đã hủy)
     public function updateStatus($id, $status) {
         $query = "UPDATE " . $this->table . " SET status = :status WHERE id = :id";
         $stmt = $this->conn->prepare($query);
@@ -56,7 +96,8 @@ class Order {
         $stmt->bindParam(":id", $id);
         return $stmt->execute();
     }
-        // Tính tổng doanh thu cho Dashboard (bỏ đơn đã hủy)
+
+    // Tính tổng doanh thu cho Dashboard (bỏ đơn đã hủy)
     public function getTotalRevenue() {
         $query = "SELECT SUM(total_price) AS total_revenue FROM " . $this->table . " WHERE status != 3";
         $stmt = $this->conn->prepare($query);

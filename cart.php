@@ -1,92 +1,6 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
-require_once __DIR__ . '/config/database.php';
-$database = new Database();
-$conn = $database->getConnection();
-
-// Kiểm tra đăng nhập
-if (!isset($_SESSION['user']) && !isset($_SESSION['user_id'])) {
-    $_SESSION['redirect_url'] = $_SERVER['REQUEST_URI'];
-    header("Location: login.php?msg=require_login");
-    exit();
-}
-
-if (!isset($_SESSION['cart'])) {
-    $_SESSION['cart'] = [];
-}
-
-// 1. Thêm vào giỏ hàng từ Form
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
-    $product_id = intval($_POST['product_id']);
-    $quantity = isset($_POST['quantity']) ? max(1, intval($_POST['quantity'])) : 1;
-
-    if (isset($_SESSION['cart'][$product_id])) {
-        $_SESSION['cart'][$product_id] += $quantity;
-    } else {
-        $_SESSION['cart'][$product_id] = $quantity;
-    }
-    header('Location: cart.php');
-    exit();
-}
-
-// 2. Thêm nhanh qua URL (?action=add&id=X)
-if (isset($_GET['action']) && $_GET['action'] === 'add' && isset($_GET['id'])) {
-    $product_id = intval($_GET['id']);
-    if ($product_id > 0) {
-        $_SESSION['cart'][$product_id] = ($_SESSION['cart'][$product_id] ?? 0) + 1;
-    }
-    header('Location: cart.php');
-    exit();
-}
-
-// 3. Cập nhật số lượng
-if (isset($_POST['update_cart'])) {
-    if (isset($_POST['qty']) && is_array($_POST['qty'])) {
-        foreach ($_POST['qty'] as $p_id => $q) {
-            $p_id = intval($p_id);
-            $q = intval($q);
-            if ($q > 0) {
-                $_SESSION['cart'][$p_id] = $q;
-            } else {
-                unset($_SESSION['cart'][$p_id]);
-            }
-        }
-    }
-    header('Location: cart.php');
-    exit();
-}
-
-// 4. Xóa 1 sản phẩm
-if (isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['id'])) {
-    $p_id = intval($_GET['id']);
-    unset($_SESSION['cart'][$p_id]);
-    header('Location: cart.php');
-    exit();
-}
-
-// 5. Xóa toàn bộ giỏ hàng
-if (isset($_GET['action']) && $_GET['action'] === 'clear') {
-    $_SESSION['cart'] = [];
-    header('Location: cart.php');
-    exit();
-}
-
-// 6. Lấy danh sách sản phẩm từ DB bằng PDO
-$cart_products = [];
-$total_all = 0;
-
-if (!empty($_SESSION['cart']) && $conn) {
-    $cart_ids = array_map('intval', array_keys($_SESSION['cart']));
-    $ids = implode(',', $cart_ids);
-
-    if (!empty($ids)) {
-        $stmt = $conn->query("SELECT * FROM products WHERE id IN ($ids)");
-        $cart_products = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-}
+// Nạp toàn bộ xử lý từ file logic sang
+require_once __DIR__ . '/controllers/CartController.php';
 ?>
 <!DOCTYPE html>
 <html lang="vi">
@@ -164,9 +78,7 @@ if (!empty($_SESSION['cart']) && $conn) {
                     </a>
 
                     <div class="cart-summary-box">
-                        <button type="submit" name="update_cart" class="btn-update-cart">
-                            <i class="fa-solid fa-rotate"></i> Cập nhật giỏ hàng
-                        </button>
+
 
                         <div class="cart-total-text">
                             Tổng tiền thanh toán: <span><?php echo number_format($total_all, 0, ',', '.'); ?> VNĐ</span>

@@ -4,7 +4,7 @@
         <!-- Cột Thương hiệu -->
         <div class="footer-brand">
             <h2>
-                <i class="fa-solid fa-heart"></i> Gấu bông Store
+                <i class="fa-solid fa-heart"></i> La Beaute Store
             </h2>
             <p>
                 Chuyên cung cấp gấu bông mềm mại, đa dạng mẫu mã, phù hợp làm quà tặng.
