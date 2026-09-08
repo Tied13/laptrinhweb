@@ -46,41 +46,38 @@ $statusMap = [
 
 <body>
 
-<?php include '../includes/navbar_admin.php'; ?>
+    <?php include '../includes/navbar_admin.php'; ?>
 
-<div class="admin-content">
-    <div class="admin-page-header">
-        <h2>Quản lý đơn hàng</h2>
-        <button type="button" class="btn btn-primary">
-            <i class="bi bi-plus-lg"></i>
-            + Thêm đơn hàng
-        </button>
-    </div>
-<?php if ($success): ?>
-<div class="alert alert-success"><?= htmlspecialchars($success) ?></div>
-<?php endif; ?>
+    <div class="admin-content">
+        <div class="admin-page-header">
+            <h2>Quản lý đơn hàng</h2>
 
-<?php if ($error): ?>
-    <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
-<?php endif; ?>
-    <div class="admin-section-title">
-        <h3>Danh sách đơn hàng</h3>
-    </div>
-    <table class="admin-table">
-        <thead>
-            <tr>
-                <th>Mã đơn</th>
-                <th>Khách hàng</th>
-                <th>SĐT</th>
-                <th>Ngày đặt</th>
-                <th>Tổng tiền</th>
-                <th>Trạng thái</th>
-                <th>Hành động</th>
-            </tr>
-        </thead>
-        <tbody>
-        <?php if (!empty($orders)): ?>
-            <?php foreach ($orders as $o):
+        </div>
+        <?php if ($success): ?>
+        <div class="alert alert-success"><?= htmlspecialchars($success) ?></div>
+        <?php endif; ?>
+
+        <?php if ($error): ?>
+        <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
+        <?php endif; ?>
+        <div class="admin-section-title">
+            <h3>Danh sách đơn hàng</h3>
+        </div>
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Mã đơn</th>
+                    <th>Khách hàng</th>
+                    <th>SĐT</th>
+                    <th>Ngày đặt</th>
+                    <th>Tổng tiền</th>
+                    <th>Trạng thái</th>
+                    <th>Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if (!empty($orders)): ?>
+                <?php foreach ($orders as $o):
                 $currentStatus = (int)$o['status'];
                 $badge = $statusMap[$currentStatus]
                     ?? [
@@ -120,76 +117,56 @@ $statusMap = [
                     </td>
 
                     <td>
-                        <span
-                            class="badge <?php echo $badge['class']; ?>"
-                            id="badge-<?php echo (int)$o['id']; ?>"
-                        >
+                        <span class="badge <?php echo $badge['class']; ?>" id="badge-<?php echo (int)$o['id']; ?>">
                             <?php echo $badge['label']; ?>
                         </span>
-                        <form
-                            action="../controllers/OrderController.php?action=updateStatus"
-                            method="POST"
-                            class="status-form"
-                        >
-                            <input
-                                type="hidden"
-                                name="id"
-                                value="<?php echo (int)$o['id']; ?>"
-                            >
-                            <select
-                                name="status"
-                                class="status-select"
+                        <form action="../controllers/OrderController.php?action=updateStatus" method="POST"
+                            class="status-form">
+                            <input type="hidden" name="id" value="<?php echo (int)$o['id']; ?>">
+                            <select name="status" class="status-select"
                                 data-badge-target="badge-<?php echo (int)$o['id']; ?>"
-                                onchange="this.form.requestSubmit()"
-                            >
+                                onchange="this.form.requestSubmit()">
                                 <?php foreach ($statusMap as $val => $info): ?>
-                                    <option
-                                        value="<?php echo $val; ?>"
-                                        <?php echo $currentStatus === $val ? 'selected' : ''; ?>
-                                    >
-                                        <?php echo $info['label']; ?>
-                                    </option>
+                                <option value="<?php echo $val; ?>"
+                                    <?php echo $currentStatus === $val ? 'selected' : ''; ?>>
+                                    <?php echo $info['label']; ?>
+                                </option>
                                 <?php endforeach; ?>
                             </select>
                         </form>
                     </td>
 
                     <td class="admin-actions">
-                        <a
-                            href="?controller=order&action=detail&id=<?php echo (int)$o['id']; ?>"
-                            class="btn btn-edit"
-                        >
+                        <a href="?controller=order&action=detail&id=<?php echo (int)$o['id']; ?>" class="btn btn-edit">
                             <i class="bi bi-eye"></i>
                             Xem
                         </a>
-                        <a
-                            href="?controller=order&action=delete&id=<?php echo (int)$o['id']; ?>"
-                            class="btn btn-delete"
-                            data-confirm="Bạn có chắc muốn xóa đơn hàng #<?php echo (int)$o['id']; ?> không?"
-                        >
+                        <a href="?controller=order&action=delete&id=<?php echo (int)$o['id']; ?>" class="btn btn-delete"
+                            data-confirm="Bạn có chắc muốn xóa đơn hàng #<?php echo (int)$o['id']; ?> không?">
                             <i class="bi bi-trash"></i>
                             Xóa
                         </a>
                     </td>
                 </tr>
-            <?php endforeach; ?>
+                <?php endforeach; ?>
 
-        <?php else: ?>
-            <tr>
-                <td colspan="7">
-                    <div class="empty-category">
-                        <i class="bi bi-receipt"></i>
-                        <strong>🧾 Chưa có đơn hàng</strong>
-                    </div>
-                </td>
-            </tr>
-        <?php endif; ?>
-        </tbody>
+                <?php else: ?>
+                <tr>
+                    <td colspan="7">
+                        <div class="empty-category">
+                            <i class="bi bi-receipt"></i>
+                            <strong>🧾 Chưa có đơn hàng</strong>
+                        </div>
+                    </td>
+                </tr>
+                <?php endif; ?>
+            </tbody>
 
-    </table>
-</div>
+        </table>
+    </div>
 
-<script src="../assets/js/admin.js"></script>
+    <script src="../assets/js/admin.js"></script>
 
 </body>
+
 </html>

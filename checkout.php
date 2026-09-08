@@ -1,3 +1,33 @@
+<?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Bắt buộc đăng nhập trước khi checkout
+if (!isset($_SESSION['user_id'])) {
+    $_SESSION['redirect_url'] = 'checkout.php';
+    $_SESSION['error'] = "Vui lòng đăng nhập để thanh toán!";
+    header("Location: login.php");
+    exit();
+}
+
+require_once __DIR__ . '/config/database.php';
+$database = new Database();
+$db = $database->getConnection();
+
+// Lấy danh sách sản phẩm từ giỏ hàng để hiển thị
+$cart = $_SESSION['cart'] ?? [];
+$cart_products = [];
+if (!empty($cart)) {
+    $ids = implode(',', array_map('intval', array_keys($cart)));
+    $stmt = $db->query("SELECT id, name, price, thumbnail FROM products WHERE id IN ($ids)");
+    $cart_products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+$error_msg = $_SESSION['error'] ?? '';
+$success_msg = $_SESSION['success'] ?? '';
+unset($_SESSION['error'], $_SESSION['success']);
+?>
 <!DOCTYPE html>
 <html lang="vi">
 
@@ -38,6 +68,7 @@
                 </div>
             </div>
             <?php else: ?>
+
             <?php if (!empty($error_msg)): ?>
             <div class="alert-danger">
                 <i class="fa-solid fa-triangle-exclamation"></i> <?= htmlspecialchars($error_msg); ?>
@@ -47,7 +78,8 @@
             <div class="checkout-grid">
                 <div>
                     <h2 class="section-heading"><i class="fa-solid fa-truck"></i> THÔNG TIN GIAO HÀNG</h2>
-                    <form action="checkout.php" method="POST" id="checkoutForm">
+                    <!-- Action trỏ trực tiếp đến controller xử lý -->
+                    <form action="controllers/OrderController.php?action=checkout" method="POST" id="checkoutForm">
                         <div class="form-group">
                             <label for="ho_ten">Họ và tên <span>(*)</span></label>
                             <input type="text" id="ho_ten" name="ho_ten" class="form-control"
@@ -80,16 +112,13 @@
                 <div>
                     <h2 class="section-heading"><i class="fa-solid fa-receipt"></i> ĐƠN HÀNG CỦA BẠN</h2>
                     <div class="summary-card">
-
                         <?php
-    $total = 0;
-
-    foreach (($cart_products ?? []) as $row):
-        $qty = $_SESSION['cart'][$row['id']] ?? 1;
-        $subtotal = $row['price'] * $qty;
-        $total += $subtotal;
-    ?>
-
+                        $total = 0;
+                        foreach (($cart_products ?? []) as $row):
+                            $qty = $_SESSION['cart'][$row['id']] ?? 1;
+                            $subtotal = $row['price'] * $qty;
+                            $total += $subtotal;
+                        ?>
                         <div class="summary-item">
                             <div>
                                 <strong><?= htmlspecialchars($row['name']); ?></strong>
@@ -97,12 +126,10 @@
                                     x <?= $qty; ?>
                                 </div>
                             </div>
-
                             <div style="font-weight: 600; color: #374151;">
                                 <?= number_format($subtotal, 0, ',', '.'); ?> VNĐ
                             </div>
                         </div>
-
                         <?php endforeach; ?>
 
                         <div class="summary-total">
@@ -111,7 +138,6 @@
                                 <?= number_format($total, 0, ',', '.'); ?> VNĐ
                             </span>
                         </div>
-
                     </div>
                 </div>
             </div>
