@@ -5,7 +5,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 require_once __DIR__ . '/config/database.php';
 
-// Tự động kiểm tra file Model Product
+// Tự động nạp file Model Product nếu có
 if (file_exists(__DIR__ . '/models/Product.php')) {
     require_once __DIR__ . '/models/Product.php';
 } elseif (file_exists(__DIR__ . '/Product.php')) {
@@ -22,14 +22,32 @@ $gallery_images = [];
 if ($conn && $id > 0) {
     if (class_exists('Product')) {
         $productModel = new Product($conn);
-        $product = $productModel->getProductById($id);
+        if (method_exists($productModel, 'getProductById')) {
+            $product = $productModel->getProductById($id);
+        }
         if (method_exists($productModel, 'getProductImages')) {
             $gallery_images = $productModel->getProductImages($id);
         }
-    } else {
-        $stmt = $conn->prepare("SELECT * FROM products WHERE id = :id LIMIT 1");
+    }
+    
+    // Fallback nếu không có Product model hoặc model không trả dữ liệu
+    if (!$product) {
+        $stmt = $conn->prepare("
+            SELECT p.*, c.name AS category_name 
+            FROM products p
+            LEFT JOIN categories c ON p.category_id = c.id
+            WHERE p.id = :id 
+            LIMIT 1
+        ");
         $stmt->execute([':id' => $id]);
         $product = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        // Lấy danh sách ảnh phụ từ product_images nếu rỗng
+        if ($product && empty($gallery_images)) {
+            $imgStmt = $conn->prepare("SELECT image_url FROM product_images WHERE product_id = :id");
+            $imgStmt->execute([':id' => $id]);
+            $gallery_images = $imgStmt->fetchAll(PDO::FETCH_ASSOC);
+        }
     }
 }
 
@@ -38,8 +56,20 @@ if (!$product) {
     exit();
 }
 
+// Hàm chuẩn hóa đường dẫn ảnh (tránh nhân đôi assets/uploads/products/)
+function getProductImagePath($path) {
+    if (empty($path)) {
+        return 'https://via.placeholder.com/450x450?text=No+Image';
+    }
+    if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://') || str_starts_with($path, 'assets/')) {
+        return $path;
+    }
+    return 'assets/uploads/products/' . ltrim($path, '/');
+}
+
 $isLoggedIn = isset($_SESSION['user']) || isset($_SESSION['user_id']);
 $thumb = $product['thumbnail'] ?? ($product['image'] ?? '');
+$mainImageUrl = getProductImagePath($thumb);
 ?>
 <!DOCTYPE html>
 <html lang="vi">
@@ -197,22 +227,42 @@ $thumb = $product['thumbnail'] ?? ($product['image'] ?? '');
         <div class="detail-card">
             <!-- Cột hình ảnh & Gallery -->
             <div class="main-img-box">
-                <img id="mainImg" src="assets/uploads/products/<?php echo htmlspecialchars($thumb); ?>"
+                <!-- 1. Chỉ 1 ảnh lớn duy nhất để hiển thị -->
+                <img id="mainImg" src="<?php echo htmlspecialchars($mainImageUrl); ?>"
                     onerror="this.src='https://via.placeholder.com/450x450?text=No+Image';"
                     alt="<?php echo htmlspecialchars($product['name']); ?>">
 
-                <?php if (!empty($gallery_images)): ?>
-                <div class="gallery-thumbnails">
-                    <!-- Ảnh chính -->
-                    <img src="assets/uploads/products/<?php echo htmlspecialchars($thumb); ?>"
-                        class="gallery-item active" onclick="changeImage(this)"
-                        onerror="this.src='https://via.placeholder.com/70x70?text=No+Image';" alt="Thumbnail Chính">
+                <?php
+    // Gom tất cả ảnh vào 1 danh sách duy nhất
+    $allImages = [];
 
-                    <!-- Các ảnh phụ -->
-                    <?php foreach ($gallery_images as $img): ?>
-                    <img src="assets/uploads/products/<?php echo htmlspecialchars($img['image_url']); ?>"
-                        class="gallery-item" onclick="changeImage(this)"
-                        onerror="this.src='https://via.placeholder.com/70x70?text=No+Image';" alt="Ảnh phụ">
+    // Lấy ảnh chính
+    if (!empty($mainImageUrl)) {
+        $allImages[] = $mainImageUrl;
+    }
+
+    // Lấy ảnh từ gallery (nếu có)
+    if (!empty($gallery_images) && is_array($gallery_images)) {
+        foreach ($gallery_images as $img) {
+            $url = is_array($img) ? ($img['image_url'] ?? '') : $img;
+            if (!empty($url)) {
+                $allImages[] = getProductImagePath($url);
+            }
+        }
+    }
+
+    // Lọc sạch các ảnh trùng nhau
+    $uniqueImages = array_values(array_unique(array_filter($allImages)));
+    ?>
+
+                <!-- 2. Chỉ hiện danh sách ảnh nhỏ bên dưới KHI VÀ CHỈ KHI có từ 2 ảnh KHÁC NHAU trở lên -->
+                <?php if (count($uniqueImages) > 1): ?>
+                <div class="gallery-thumbnails">
+                    <?php foreach ($uniqueImages as $idx => $imgSrc): ?>
+                    <img src="<?php echo htmlspecialchars($imgSrc); ?>"
+                        class="gallery-item <?php echo $idx === 0 ? 'active' : ''; ?>" onclick="changeImage(this)"
+                        onerror="this.src='https://via.placeholder.com/70x70?text=No+Image';"
+                        alt="Ảnh <?php echo $idx + 1; ?>">
                     <?php endforeach; ?>
                 </div>
                 <?php endif; ?>
@@ -230,7 +280,6 @@ $thumb = $product['thumbnail'] ?? ($product['image'] ?? '');
                     <?php echo number_format($product['price'], 0, ',', '.'); ?> VNĐ
                 </div>
 
-                <!-- Form gửi sang cart.php có kèm ?action=add để Controller nhận dạng ngay -->
                 <form action="cart.php?action=add" method="POST" id="cartForm">
                     <input type="hidden" name="product_id" value="<?php echo (int)$product['id']; ?>">
 
@@ -266,7 +315,6 @@ $thumb = $product['thumbnail'] ?? ($product['image'] ?? '');
 
     <?php include("includes/footer.php"); ?>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
     <script src="assets/js/main.js"></script>
     <script>
     // Tăng giảm số lượng
@@ -288,7 +336,7 @@ $thumb = $product['thumbnail'] ?? ($product['image'] ?? '');
         });
     }
 
-    // Đổi ảnh khi nhấn vào danh sách ảnh Gallery
+    // Đổi ảnh khi nhấn vào danh sách gallery
     function changeImage(el) {
         const mainImg = document.getElementById('mainImg');
         if (mainImg && el) {

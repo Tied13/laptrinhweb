@@ -118,8 +118,8 @@ if (!empty($search)) $pagination_query .= "&search=" . urlencode($search);
 
                     <span class="badge-sale">Sale 20%</span>
                     <div class="product-img-wrapper">
-                        <img src="assets/uploads/products/<?php echo htmlspecialchars($thumb); ?>"
-                            onerror="this.src='https://via.placeholder.com/300x300?text=No+Image';"
+                        <img src="assets/uploads/products/<?php echo basename(htmlspecialchars($thumb)); ?>"
+                            onerror="this.onerror=null; this.src='https://placehold.co/300x300?text=No+Image';"
                             alt="<?php echo htmlspecialchars($row['name']); ?>">
                     </div>
 
