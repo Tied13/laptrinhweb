@@ -8,7 +8,34 @@ if (!isset($_SESSION['role']) || (int)$_SESSION['role'] !== 1) {
     exit();
 }
 
-// Khởi tạo mảng rỗng nếu controller chưa truyền biến này
+// 1. Tự động kết nối DB nếu chưa đi qua Controller
+if (empty($products) || empty($categories)) {
+    // Tự động tìm đường dẫn file kết nối database
+    $dbPath = file_exists(__DIR__ . '/../config/database.php') 
+        ? __DIR__ . '/../config/database.php' 
+        : __DIR__ . '/config/database.php';
+
+    if (file_exists($dbPath)) {
+        require_once $dbPath;
+        $db = new Database();
+        $conn = $db->getConnection();
+
+        // Lấy danh sách sản phẩm kèm tên danh mục
+        $sqlProducts = "SELECT p.*, c.name AS category_name 
+                        FROM products p 
+                        LEFT JOIN categories c ON p.category_id = c.id 
+                        ORDER BY p.id DESC";
+        $stmt = $conn->prepare($sqlProducts);
+        $stmt->execute();
+        $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Lấy danh sách danh mục để đổ vào form Select
+        $stmtCat = $conn->query("SELECT * FROM categories WHERE status = 1 ORDER BY id ASC");
+        $categories = $stmtCat->fetchAll(PDO::FETCH_ASSOC);
+    }
+}
+
+// Khởi tạo mảng dự phòng
 $categories = $categories ?? [];
 $products = $products ?? [];
 $product_edit = $product_edit ?? null;
@@ -62,8 +89,10 @@ $product_edit = $product_edit ?? null;
                         </td>
 
                         <td>
-                            <img src="../assets/uploads/products/<?php echo htmlspecialchars($p['thumbnail']); ?>"
-                                class="admin-thumb" alt="<?php echo htmlspecialchars($p['name']); ?>">
+                            <<img
+                                src="../assets/uploads/products/<?php echo basename(htmlspecialchars($p['thumbnail'])); ?>"
+                                class="admin-thumb" onerror="this.src='https://placehold.co/100x100?text=No+Image';"
+                                alt="<?php echo htmlspecialchars($p['name']); ?>">
                         </td>
 
                         <td>
