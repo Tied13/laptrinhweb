@@ -65,7 +65,7 @@ $products = $productModel->getAll($search, $category_id, 8, 0);
 
         <!-- Slider Banner -->
         <div class="slider-container">
-            <div class="slide active" style="background-image: url('images/4.jpg');">
+            <div class="slide active" style="background-image: url('assets/uploads/products/banner-gau-bong.jpg');">
                 <div class="banner-overlay">
                     <h2>ƯU ĐÃI LỚN!</h2>
                     <p>Giảm giá tới 50% cho các dòng gấu bông cao cấp</p>

@@ -288,7 +288,7 @@ nav .category-btn {
 .slide {
   width: 100%;
   height: 100%;
-  background-size: cover;
+  background-size: contain; /* Giữ nguyên toàn bộ ảnh, không bị cắt hay phóng to vỡ nét */
   background-position: center;
   background-repeat: no-repeat;
   display: flex;
