@@ -1,3 +1,4 @@
+--DROP DATABASE IF EXISTS bangaubong_db;
 CREATE DATABASE IF NOT EXISTS bangaubong_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE bangaubong_db;
 
@@ -66,6 +67,11 @@ CREATE TABLE IF NOT EXISTS order_details (
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
 );
 
+-- Tạo sẵn tài khoản Admin mặc định (Username: admin / Password: password123)
+INSERT INTO users (fullname, username, password, email, role, status) 
+VALUES ('Quản Trị Viên', 'admin', '$2y$10$vI8aWBnW3fID.ZQ4/zo1G.q1lRps.9cGLcZEiGDMVr5yUP1KUOYTa', 'admin@toanbangau.com', 1, 1)
+ON DUPLICATE KEY UPDATE id=id;
+
 -- ==========================================================
 -- DỮ LIỆU BAN ĐẦU
 -- ==========================================================
@@ -76,7 +82,8 @@ INSERT INTO categories (id, name, status) VALUES
 (1, 'Gấu Teddy', 1),
 (2, 'Thú Bông Hoạt Hình', 1),
 (3, 'Gối Ôm Trái Cây', 1),
-(4, 'Thú Bông', 1)
+(4, 'Thú Bông', 1),
+(5, 'Đồ Ăn & Thức Uống', 1)
 ON DUPLICATE KEY UPDATE name = VALUES(name), status = VALUES(status);
 
 -- ==========================================================
@@ -121,7 +128,6 @@ DELIMITER ;
 -- 3. SẢN PHẨM VÀ ẢNH CHI TIẾT
 -- ==========================================================
 
--- Thêm Sản phẩm mẫu (Bao gồm 3 sản phẩm mới: tho.jpg, tho1.jpg, chobong.jpg)
 INSERT INTO products (id, category_id, name, price, thumbnail, description) VALUES
 (1, 1, 'Gấu Teddy Áo Len', 550000.00, 'assets/uploads/products/teddy1.jpg', 'Gấu bông Teddy size 1m6 chất liệu lông xoắn cao cấp, nhồi bông PP 3D đàn hồi mềm mịn, tặng kèm nơ ôm tim lãng mạn.'),
 (2, 1, 'Gấu Teddy Classic', 280000.00, 'assets/uploads/products/teddy2.jpg', 'Gấu bông dáng xinh, sợi lông xù mềm không rụng, phù hợp làm quà tặng sinh nhật.'),
@@ -131,16 +137,36 @@ INSERT INTO products (id, category_id, name, price, thumbnail, description) VALU
 (6, 3, 'Trái Bơ', 220000.00, 'assets/uploads/products/traibo.jpg', 'Gấu bông hình quả bơ xanh mềm mại, chất liệu co giãn êm ái, thích hợp làm gối ôm hoặc quà tặng sinh nhật.'),
 (7, 4, 'Thỏ Bông Tai Dài StellaLou', 230000.00, 'assets/uploads/products/tho.jpg', 'Thỏ bông dáng đứng tai dài mềm mịn, chất liệu bông xoắn 3 chiều an toàn cho da trẻ nhỏ.'),
 (8, 4, 'Thỏ Bông Đeo Tai Nghe Đáng Yêu', 260000.00, 'assets/uploads/products/tho1.jpg', 'Thỏ nhồi bông mặc váy xòe vintage dễ thương, lông thỏ nhân tạo siêu mượt thích hợp làm quà tặng.'),
-(9, 2, 'Chó Bông Trắng', 210000.00, 'assets/uploads/products/chobong.jpg', 'Gấu bông hình chú chó Shiba mắt híp siêu đáng yêu, chất vải thun co giãn 4 chiều mềm mịn.')
+(9, 2, 'Chó Bông Trắng', 210000.00, 'assets/uploads/products/chobong.jpg', 'Gấu bông hình chú chó Shiba mắt híp siêu đáng yêu, chất vải thun co giãn 4 chiều mềm mịn.'),
+(10, 3, 'Dưa Hấu Mơ Mộng', 190000.00, 'assets/uploads/products/Sản phẩm 6 - Dưa Hấu Mơ Mộng.jpg', 'Gấu bông quả dưa hấu đỏ ngọt ngào, chất liệu nhung mềm mịn êm ái.'),
+(11, 2, 'Nhân Viên McDonald''s', 250000.00, 'assets/uploads/products/Sản phẩm 7 - Nhân Viên McDonald''s.jpg', 'Gấu bông phong cách nhân viên phục vụ thức ăn nhanh độc đáo, thiết kế cá tính.'),
+(12, 5, 'Bánh Mì Croissant', 170000.00, 'assets/uploads/products/Sản phẩm 8 - Bánh Mì Croissant.jpg', 'Gối ôm hình bánh sừng bò vàng ươm, mềm xốp, thích hợp tựa lưng làm việc.'),
+(13, 5, 'Ly Nước Mùa Hè', 180000.00, 'assets/uploads/products/Sản phẩm 9 - Ly Nước Mùa Hè.jpg', 'Gấu bông hình ly nước giải khát mùa hè sảng khoái, màu sắc tươi tắn.'),
+(14, 5, 'Trứng Ốp La Ngốc Nghếch', 160000.00, 'assets/uploads/products/Sản phẩm 10 - Trứng Ốp La Ngốc Nghếch.jpg', 'Gối ôm hình trứng ốp la lòng đỏ biểu cảm ngộ nghĩnh, vải thun co giãn 4 chiều.'),
+(15, 4, 'Cừu Bông Mây Trắng', 210000.00, 'assets/uploads/products/Sản phẩm 11 - Cừu Bông Mây Trắng.jpg', 'Chú cừu lông xù trắng muốt êm ái như đám mây, an toàn cho trẻ nhỏ.'),
+(16, 5, 'Cốc Nước Sao Băng', 185000.00, 'assets/uploads/products/Sản phẩm 12 - Cốc Nước Sao Băng.jpg', 'Gấu bông ly nước đính kèm họa tiết sao băng lấp lánh, đáng yêu.'),
+(17, 5, 'Bé Cà Phê Macchiato', 195000.00, 'assets/uploads/products/Sản phẩm 13 - Bé Cà Phê Macchiato.jpg', 'Tạo hình ly cà phê bọt kem ngọt ngào, món quà xinh xắn cho bạn bè.'),
+(18, 5, 'Bánh Tam Giác Phô Mai', 175000.00, 'assets/uploads/products/Sản phẩm 14 - Bánh Tam Giác Phô Mai.jpg', 'Gối tựa lưng miếng bánh sandwich phô mai tam giác mềm mại, ấm áp.'),
+(19, 5, 'Trứng Nướng Tròn Xoe', 165000.00, 'assets/uploads/products/Sản phẩm 15 - Trứng Nướng Tròn Xoay.jpg', 'Thú bông bánh trứng tròn trịa, vải nhung mịn không xơ rụng.'),
+(20, 2, 'Quả Cầu Lông', 150000.00, 'assets/uploads/products/Sản phẩm 16 - Quả Cầu Lông.jpg', 'Thú bông hình quả cầu lông thể thao độc lạ, món quà năng động vui nhộn.'),
+(21, 2, 'Gấu Ong Mật Béo', 240000.00, 'assets/uploads/products/Sản phẩm 17 - Gấu Ong Mật Béo.jpg', 'Gấu bông tròn ú hóa trang chú ong vàng chăm chỉ, nhồi bông PP 3D căng tròn.'),
+(22, 2, 'Cục Bông 4 Màu', 155000.00, 'assets/uploads/products/Sản phẩm 18 - Cục Bông 4 Màu.jpg', 'Cục bông tròn mềm mại kết hợp 4 gam màu pastel dịu mắt.'),
+(23, 2, 'Gấu Bông Ăn Lá', 230000.00, 'assets/uploads/products/Sản phẩm 19 - Gấu Bông Ăn Lá.jpg', 'Chú gấu bông cầm nhánh lá xanh xinh xắn, chất vải mịn màng đàn hồi tốt.'),
+(24, 4, 'Vịt Vàng Tỏa Nắng', 190000.00, 'assets/uploads/products/Sản phẩm 20 - Vịt Vàng Tỏa Nắng.jpg', 'Vịt bông vàng ươm với nụ cười rạng rỡ, thích hợp làm gối ôm trang trí.'),
+(25, 3, 'Cà Chua Tròn Xoe', 160000.00, 'assets/uploads/products/Sản phẩm 21 - Cà Chua Tròn Xoe.jpg', 'Gối bông hình quả cà chua đỏ mọng tròn xoe siêu cưng.'),
+(26, 4, 'Cộng Sự Cáo Cam', 225000.00, 'assets/uploads/products/Sản phẩm 22 - Cộng Sự Cáo Cam.jpg', 'Bé cáo lông cam thông minh lanh lợi, dáng ngồi đáng yêu.'),
+(27, 1, 'Gấu Nhỏ Mang Nơ', 215000.00, 'assets/uploads/products/Sản phẩm 23 - Gấu Nhỏ Mang Nơ.jpg', 'Gấu teddy size nhỏ đeo nơ cổ thanh lịch, chất lông mềm cao cấp.'),
+(28, 4, 'Bé Voi Quần Bông', 235000.00, 'assets/uploads/products/Sản phẩm 24 - Bé Voi Quần Bông.jpg', 'Chú voi con mặc quần yếm bông phồng siêu ngộ nghĩnh.'),
+(29, 4, 'Rùa Xanh', 180000.00, 'assets/uploads/products/Sản phẩm 25 - Rùa Xanh.jpg', 'Rùa bông mai xanh tròn trịa, chất liệu mềm mại thích hợp kê đầu ngủ.')
 ON DUPLICATE KEY UPDATE 
     category_id = VALUES(category_id),
-    name = VALUES(name),
-    thumbnail = VALUES(thumbnail),
-    price = VALUES(price),
+    name        = VALUES(name),
+    thumbnail   = VALUES(thumbnail),
+    price       = VALUES(price),
     description = VALUES(description);
 
--- Thêm Thư viện ảnh chi tiết (product_images)
-DELETE FROM product_images WHERE product_id BETWEEN 1 AND 9;
+-- Thư viện ảnh chi tiết (product_images)
+DELETE FROM product_images WHERE product_id BETWEEN 1 AND 29;
 INSERT INTO product_images (product_id, image_url) VALUES
 (1, 'assets/uploads/products/teddy1.jpg'),
 (2, 'assets/uploads/products/teddy2.jpg'),
@@ -150,4 +176,24 @@ INSERT INTO product_images (product_id, image_url) VALUES
 (6, 'assets/uploads/products/traibo.jpg'),
 (7, 'assets/uploads/products/tho.jpg'),
 (8, 'assets/uploads/products/tho1.jpg'),
-(9, 'assets/uploads/products/chobong.jpg');
+(9, 'assets/uploads/products/chobong.jpg'),
+(10, 'assets/uploads/products/Sản phẩm 6 - Dưa Hấu Mơ Mộng.jpg'),
+(11, 'assets/uploads/products/Sản phẩm 7 - Nhân Viên McDonald''s.jpg'),
+(12, 'assets/uploads/products/Sản phẩm 8 - Bánh Mì Croissant.jpg'),
+(13, 'assets/uploads/products/Sản phẩm 9 - Ly Nước Mùa Hè.jpg'),
+(14, 'assets/uploads/products/Sản phẩm 10 - Trứng Ốp La Ngốc ....jpg'),
+(15, 'assets/uploads/products/Sản phẩm 11 - Cừu Bông Mây Trắng.jpg'),
+(16, 'assets/uploads/products/Sản phẩm 12 - Cốc Nước Sao Băng.jpg'),
+(17, 'assets/uploads/products/Sản phẩm 13 - Bé Cà Phê Macchiato.jpg'),
+(18, 'assets/uploads/products/Sản phẩm 14 - Bánh Tam Giác Phô ....jpg'),
+(19, 'assets/uploads/products/Sản phẩm 15 - Trứng Nướng Tròn ....jpg'),
+(20, 'assets/uploads/products/Sản phẩm 16 - Quả Cầu Lông.jpg'),
+(21, 'assets/uploads/products/Sản phẩm 17 - Gấu Ong Mật Béo.jpg'),
+(22, 'assets/uploads/products/Sản phẩm 18 - Cục Bông 4 Màu.jpg'),
+(23, 'assets/uploads/products/Sản phẩm 19 - Gấu Bông Ăn Lá.jpg'),
+(24, 'assets/uploads/products/Sản phẩm 20 - Vịt Vàng Tỏa Nắng.jpg'),
+(25, 'assets/uploads/products/Sản phẩm 21 - Cà Chua Tròn Xoe.jpg'),
+(26, 'assets/uploads/products/Sản phẩm 22 - Cộng Sự Cáo Cam.jpg'),
+(27, 'assets/uploads/products/Sản phẩm 23 - Gấu Nhỏ Mang Nơ.jpg'),
+(28, 'assets/uploads/products/Sản phẩm 24 - Bé Voi Quần Bông.jpg'),
+(29, 'assets/uploads/products/Sản phẩm 25 - Rùa Xanh.jpg');
