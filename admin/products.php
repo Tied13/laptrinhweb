@@ -34,11 +34,19 @@ if (empty($products) || empty($categories)) {
         $categories = $stmtCat->fetchAll(PDO::FETCH_ASSOC);
     }
 }
-
 // Khởi tạo mảng dự phòng
 $categories = $categories ?? [];
 $products = $products ?? [];
 $product_edit = $product_edit ?? null;
+
+// Nếu bấm "Sửa" (?action=edit&id=X) thì lấy dữ liệu sản phẩm đổ vào form
+if (isset($conn) && ($_GET['action'] ?? '') === 'edit' && !empty($_GET['id'])) {
+    $editId = (int)$_GET['id'];
+    $stmtEditProduct = $conn->prepare("SELECT * FROM products WHERE id = :id LIMIT 1");
+    $stmtEditProduct->bindValue(':id', $editId, PDO::PARAM_INT);
+    $stmtEditProduct->execute();
+    $product_edit = $stmtEditProduct->fetch(PDO::FETCH_ASSOC) ?: null;
+}
 ?>
 <!DOCTYPE html>
 <html lang="vi">
@@ -108,12 +116,12 @@ $product_edit = $product_edit ?? null;
                         </td>
 
                         <td class="admin-actions">
-                            <a href="?controller=product&action=edit&id=<?php echo (int)$p['id']; ?>"
+                            <a href="products.php?action=edit&id=<?php echo (int)$p['id']; ?>"
                                 class="btn btn-edit">
                                 Sửa
                             </a>
 
-                            <a href="?controller=product&action=delete&id=<?php echo (int)$p['id']; ?>"
+                            <a href="../controllers/ProductController.php?action=delete&id=<?php echo (int)$p['id']; ?>"
                                 class="btn btn-delete btn-delete-confirm">
                                 Xóa
                             </a>
@@ -138,8 +146,7 @@ $product_edit = $product_edit ?? null;
             </table>
         </div>
 
-
-        <div class="admin-form-box product-form-box" id="product-form">
+        <div class="admin-form-box product-form-box<?php echo isset($product_edit['id']) ? ' show' : ''; ?>" id="product-form">
 
             <div class="product-form-header">
                 <h3>
@@ -152,9 +159,7 @@ $product_edit = $product_edit ?? null;
                     ×
                 </button>
             </div>
-
-            <form action="../index.php?controller=product&action=store" method="POST" enctype="multipart/form-data">
-
+            <form action="../controllers/ProductController.php?action=<?php echo isset($product_edit['id']) ? 'update' : 'store'; ?>" method="POST" enctype="multipart/form-data">
                 <!-- PHẦN BE2 -->
                 <input type="hidden" name="id" value="<?php echo isset($product_edit['id'])
                     ? (int)$product_edit['id']
