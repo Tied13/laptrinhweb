@@ -86,6 +86,8 @@ if ($action === 'update' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // 3. Xóa sản phẩm
+if ($action === 'delete' && !empty($_GET['id'])) {
+    $id = (int)$_GET['id'];
     $productModel->delete($id);
     header("Location: ../admin/products.php");
     exit();
