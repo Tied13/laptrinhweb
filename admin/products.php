@@ -218,8 +218,7 @@ if (isset($conn) && ($_GET['action'] ?? '') === 'edit' && !empty($_GET['id'])) {
 
                 <div class="form-group">
                     <label>Chọn nhiều ảnh phụ:</label>
-
-                    <input type="file" name="images[]" multiple required>
+                    <input type="file" name="images[]" multiple>
                 </div>
 
                 <div class="product-form-actions">
