@@ -31,6 +31,13 @@ $statusMap = [
     3 => ['label' => 'Đã hủy',    'class' => 'badge-cancel'],
 ];
 
+$viewOrder = null;
+$viewDetails = [];
+if (isset($_GET['view'])) {
+    $viewId = (int)$_GET['view'];
+    $viewOrder = $orderModel->getOrderById($viewId);
+    if ($viewOrder) { $viewDetails = $orderModel->getOrderDetails($viewId); }
+}
 ?>
 <!DOCTYPE html>
 <html lang="vi">
@@ -137,11 +144,11 @@ $statusMap = [
                     </td>
 
                     <td class="admin-actions">
-                        <a href="?controller=order&action=detail&id=<?php echo (int)$o['id']; ?>" class="btn btn-edit">
+                        <a href="orders.php?view=<?php echo (int)$o['id']; ?>" class="btn btn-edit">
                             <i class="bi bi-eye"></i>
                             Xem
                         </a>
-                        <a href="?controller=order&action=delete&id=<?php echo (int)$o['id']; ?>" class="btn btn-delete"
+                        <a href="../controllers/OrderController.php?action=delete&id=<?php echo (int)$o['id']; ?>" class="btn btn-delete"
                             data-confirm="Bạn có chắc muốn xóa đơn hàng #<?php echo (int)$o['id']; ?> không?">
                             <i class="bi bi-trash"></i>
                             Xóa
@@ -163,6 +170,33 @@ $statusMap = [
             </tbody>
 
         </table>
+
+        <?php if (isset($_GET['view'])): ?>
+            <?php if ($viewOrder): ?>
+            <div class="dashboard-card" style="margin-top: 20px;">
+                <p><strong>Khách hàng:</strong> <?php echo htmlspecialchars($viewOrder['customer_name']); ?></p>
+                <p><strong>SĐT:</strong> <?php echo htmlspecialchars($viewOrder['customer_phone']); ?></p>
+                <p><strong>Địa chỉ:</strong> <?php echo htmlspecialchars($viewOrder['customer_address']); ?></p>
+                <table class="admin-table" style="margin-top: 10px;">
+                    <thead><tr><th>Sản phẩm</th><th>Đơn giá</th><th>SL</th><th>Thành tiền</th></tr></thead>
+                    <tbody>
+                    <?php foreach ($viewDetails as $d): ?>
+                        <tr>
+                            <td><?php echo htmlspecialchars($d['product_name'] ?? '(đã xóa)'); ?></td>
+                            <td><?php echo number_format($d['price'], 0, ',', '.'); ?>đ</td>
+                            <td><?php echo (int)$d['quantity']; ?></td>
+                            <td><?php echo number_format($d['price'] * $d['quantity'], 0, ',', '.'); ?>đ</td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+                <p style="font-weight:bold; margin-top:10px;">Tổng: <?php echo number_format($viewOrder['total_price'], 0, ',', '.'); ?>đ</p>
+                <a href="orders.php" class="btn btn-edit">Đóng</a>
+            </div>
+            <?php else: ?>
+            <div class="alert alert-danger">Đơn hàng không tồn tại.</div>
+            <?php endif; ?>
+        <?php endif; ?>
     </div>
 
     <script src="../assets/js/admin.js"></script>
