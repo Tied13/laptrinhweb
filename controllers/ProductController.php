@@ -5,12 +5,13 @@ if (session_status() === PHP_SESSION_NONE) {
 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../models/Product.php';
-$products = $this->productModel->getAll();
-    
-    // Bổ sung: Lấy danh sách danh mục để truyền sang view
-    $categories = $this->categoryModel->getAll(); 
 
-    require_once '../views/admin/products.php';
+// Chỉ Admin (role = 1) mới được thêm/sửa/xóa sản phẩm
+if (!isset($_SESSION['role']) || (int)$_SESSION['role'] !== 1) {
+    header("Location: ../login.php");
+    exit();
+}
+
 $database = new Database();
 $db = $database->getConnection();
 $productModel = new Product($db);
@@ -85,9 +86,10 @@ if ($action === 'update' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // 3. Xóa sản phẩm
-if ($action === 'delete' && !empty($_GET['id'])) {
-    $id = (int)$_GET['id'];
     $productModel->delete($id);
     header("Location: ../admin/products.php");
     exit();
 }
+
+header("Location: ../admin/products.php");
+exit();
