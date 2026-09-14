@@ -110,12 +110,24 @@ if ($action === 'login' && $_SERVER['REQUEST_METHOD'] === 'POST') {
             header("Location: ../login.php");
             exit();
         }
-
         // Lưu thông tin người dùng vào Session
         $_SESSION['user_id']  = $user['id'];
         $_SESSION['username'] = $user['username'];
         $_SESSION['fullname'] = $user['fullname'];
+        $_SESSION['phone']    = $user['phone'];
+        $_SESSION['address']  = $user['address'];
         $_SESSION['role']     = (int)$user['role'];
+
+        // Nếu trước đó bị đá sang trang login từ 1 thao tác dở dang (thêm giỏ hàng, checkout...)
+        // thì quay lại đúng chỗ đó thay vì luôn về trang chủ/trang admin.
+        $redirect = trim($_POST['redirect'] ?? ($_SESSION['redirect_url'] ?? ''));
+        unset($_SESSION['redirect_url']);
+        $redirect = ltrim($redirect, '/'); // tránh bị lợi dụng redirect ra domain khác (//evil.com)
+
+        if ($redirect !== '' && strpos($redirect, '://') === false) {
+            header("Location: ../" . $redirect);
+            exit();
+        }
 
         // Điều hướng theo quyền: Admin sang trang admin, Khách về trang chủ
         if ($_SESSION['role'] === 1) {
