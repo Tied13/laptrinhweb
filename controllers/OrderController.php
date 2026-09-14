@@ -71,9 +71,9 @@ if ($action === 'checkout' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         exit();
     }
 
-    // Nếu database đã có Trigger tự tính tổng tiền từ order_details, truyền 0 vào createOrder:
-    // $order_id = $orderModel->createOrder($user_id, $customer_name, $customer_phone, $customer_address, 0);
-    $order_id = $orderModel->createOrder($user_id, $customer_name, $customer_phone, $customer_address, $total);
+    // database.sql có trigger trg_after_insert_order_details tự cộng dồn total_price
+    // mỗi khi addOrderDetail() insert 1 dòng -> phải khởi tạo total_price = 0 ở đây.
+    $order_id = $orderModel->createOrder($user_id, $customer_name, $customer_phone, $customer_address, 0);
     
     if (!$order_id) {
         $_SESSION['error'] = "Đặt hàng thất bại, vui lòng thử lại!";
