@@ -97,7 +97,7 @@ if (isset($conn) && ($_GET['action'] ?? '') === 'edit' && !empty($_GET['id'])) {
                         </td>
 
                         <td>
-                            <<img
+                            <img
                                 src="../assets/uploads/products/<?php echo basename(htmlspecialchars($p['thumbnail'])); ?>"
                                 class="admin-thumb" onerror="this.src='https://placehold.co/100x100?text=No+Image';"
                                 alt="<?php echo htmlspecialchars($p['name']); ?>">
