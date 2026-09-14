@@ -83,20 +83,20 @@ unset($_SESSION['error'], $_SESSION['success']);
                         <div class="form-group">
                             <label for="ho_ten">Họ và tên <span>(*)</span></label>
                             <input type="text" id="ho_ten" name="ho_ten" class="form-control"
-                                value="<?= htmlspecialchars($_SESSION['user']['fullname'] ?? ''); ?>"
+                                value="<?= htmlspecialchars($_SESSION['fullname'] ?? ''); ?>"
                                 placeholder="Nhập họ và tên..." required>
                         </div>
                         <div class="form-group">
                             <label for="so_dien_thoai">Số điện thoại <span>(*)</span></label>
                             <input type="tel" id="so_dien_thoai" name="so_dien_thoai" class="form-control"
-                                value="<?= htmlspecialchars($_SESSION['user']['phone'] ?? ''); ?>"
+                                value="<?= htmlspecialchars($_SESSION['phone'] ?? ''); ?>"
                                 placeholder="Nhập số điện thoại..." required>
                         </div>
                         <div class="form-group">
                             <label for="dia_chi">Địa chỉ nhận hàng <span>(*)</span></label>
                             <textarea id="dia_chi" name="dia_chi" class="form-control"
                                 placeholder="Nhập địa chỉ chi tiết..."
-                                required><?= htmlspecialchars($_SESSION['user']['address'] ?? ''); ?></textarea>
+                                required><?= htmlspecialchars($_SESSION['address'] ?? ''); ?></textarea>
                         </div>
                         <div class="form-group">
                             <label for="ghi_chu">Ghi chú đơn hàng</label>
