@@ -14,6 +14,9 @@
         <section class="login">
             <h2>Đăng nhập</h2>
             <form action="controllers/AuthController.php?action=login" method="post">
+                <?php if (!empty($_GET['redirect'])): ?>
+                <input type="hidden" name="redirect" value="<?php echo htmlspecialchars($_GET['redirect']); ?>">
+                <?php endif; ?>
                 <input type="text" name="username" placeholder="Tên đăng nhập" required />
                 <input type="password" name="password" placeholder="Mật khẩu" required />
                 <button type="submit">Đăng nhập</button>
