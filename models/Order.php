@@ -61,6 +61,25 @@ class Order {
         return $stmt->fetch();
     }
 
+    public function getOrderDetails($order_id) {
+        $query = "SELECT order_details.*, products.name AS product_name
+                  FROM order_details
+                  INNER JOIN products ON order_details.product_id = products.id
+                  WHERE order_details.order_id = :order_id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":order_id", $order_id);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
+    public function getRecentOrders($limit) {
+        $limit = (int)$limit;
+        $query = "SELECT id, created_at, total_price AS total FROM " . $this->table . " ORDER BY id DESC LIMIT $limit";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
     // Xóa đơn hàng cùng chi tiết đơn hàng
     public function deleteOrder($id) {
         try {
