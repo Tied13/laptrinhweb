@@ -71,81 +71,6 @@ if (isset($conn) && ($_GET['action'] ?? '') === 'edit' && !empty($_GET['id'])) {
             </button>
         </div>
 
-        <div class="product-list-section">
-            <h3 class="section-title">Danh sách sản phẩm</h3>
-
-            <table class="admin-table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Ảnh</th>
-                        <th>Tên sản phẩm</th>
-                        <th>Danh mục</th>
-                        <th>Giá</th>
-                        <th>Thao tác</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                    <?php if (!empty($products)): ?>
-
-                    <?php foreach ($products as $p): ?>
-
-                    <tr>
-                        <td>
-                            <?php echo (int)$p['id']; ?>
-                        </td>
-
-                        <td>
-                            <img
-                                src="../assets/uploads/products/<?php echo basename(htmlspecialchars($p['thumbnail'])); ?>"
-                                class="admin-thumb" onerror="this.src='https://placehold.co/100x100?text=No+Image';"
-                                alt="<?php echo htmlspecialchars($p['name']); ?>">
-                        </td>
-
-                        <td>
-                            <?php echo htmlspecialchars($p['name']); ?>
-                        </td>
-
-                        <td>
-                            <?php echo htmlspecialchars($p['category_name']); ?>
-                        </td>
-
-                        <td>
-                            <?php echo number_format($p['price'], 0, ',', '.'); ?>đ
-                        </td>
-
-                        <td class="admin-actions">
-                            <a href="products.php?action=edit&id=<?php echo (int)$p['id']; ?>"
-                                class="btn btn-edit">
-                                Sửa
-                            </a>
-
-                            <a href="../controllers/ProductController.php?action=delete&id=<?php echo (int)$p['id']; ?>"
-                                class="btn btn-delete btn-delete-confirm">
-                                Xóa
-                            </a>
-                        </td>
-                    </tr>
-
-                    <?php endforeach; ?>
-
-                    <?php else: ?>
-
-                    <tr>
-                        <td colspan="6">
-                            <div class="empty-product">
-                                <i class="bi bi-box-seam"></i>
-                                <strong>🧸 Chưa có sản phẩm</strong>
-                            </div>
-                        </td>
-                    </tr>
-
-                    <?php endif; ?>
-                </tbody>
-            </table>
-        </div>
-
         <div class="admin-form-box product-form-box<?php echo isset($product_edit['id']) ? ' show' : ''; ?>" id="product-form">
 
             <div class="product-form-header">
@@ -232,6 +157,81 @@ if (isset($conn) && ($_GET['action'] ?? '') === 'edit' && !empty($_GET['id'])) {
                 </div>
 
             </form>
+        </div>
+
+        <div class="product-list-section">
+            <h3 class="section-title">Danh sách sản phẩm</h3>
+
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Ảnh</th>
+                        <th>Tên sản phẩm</th>
+                        <th>Danh mục</th>
+                        <th>Giá</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <?php if (!empty($products)): ?>
+
+                    <?php foreach ($products as $p): ?>
+
+                    <tr>
+                        <td>
+                            <?php echo (int)$p['id']; ?>
+                        </td>
+
+                        <td>
+                            <img
+                                src="../assets/uploads/products/<?php echo basename(htmlspecialchars($p['thumbnail'])); ?>"
+                                class="admin-thumb" onerror="this.src='https://placehold.co/100x100?text=No+Image';"
+                                alt="<?php echo htmlspecialchars($p['name']); ?>">
+                        </td>
+
+                        <td>
+                            <?php echo htmlspecialchars($p['name']); ?>
+                        </td>
+
+                        <td>
+                            <?php echo htmlspecialchars($p['category_name']); ?>
+                        </td>
+
+                        <td>
+                            <?php echo number_format($p['price'], 0, ',', '.'); ?>đ
+                        </td>
+
+                        <td class="admin-actions">
+                            <a href="products.php?action=edit&id=<?php echo (int)$p['id']; ?>"
+                                class="btn btn-edit">
+                                Sửa
+                            </a>
+
+                            <a href="../controllers/ProductController.php?action=delete&id=<?php echo (int)$p['id']; ?>"
+                                class="btn btn-delete btn-delete-confirm">
+                                Xóa
+                            </a>
+                        </td>
+                    </tr>
+
+                    <?php endforeach; ?>
+
+                    <?php else: ?>
+
+                    <tr>
+                        <td colspan="6">
+                            <div class="empty-product">
+                                <i class="bi bi-box-seam"></i>
+                                <strong>🧸 Chưa có sản phẩm</strong>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <?php endif; ?>
+                </tbody>
+            </table>
         </div>
 
     </div>
