@@ -131,7 +131,7 @@ if ($action === 'login' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Điều hướng theo quyền: Admin sang trang admin, Khách về trang chủ
         if ($_SESSION['role'] === 1) {
-            header("Location: ../admin/products.php");
+            header("Location: ../admin/index.php");
         } else {
             header("Location: ../index.php");
         }
