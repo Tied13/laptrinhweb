@@ -101,7 +101,7 @@ $weeklyRevenue = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <div class="stat-icon">👤</div>
                 <div class="stat-info">
                     <span class="stat-label">Khách hàng</span>
-                    <span class="stat-value"><?= (int)($totalUsers ?? 0) ?></span>
+                    <span class="stat-value"><?= max(0, (int)($totalUsers ?? 0) - 1) ?></span>
                 </div>
             </div>
         </div>
