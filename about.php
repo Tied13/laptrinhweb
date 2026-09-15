@@ -26,14 +26,14 @@
                 <div class="about-right">
                     <h3>Lý Do Bạn Nên Chọn La Beaute Store</h3>
                     <p>
-                        Gấu Bông Store là cửa hàng chuyên cung cấp các mẫu gấu bông và thú nhồi bông
-                        đáng yêu cho mọi lứa tuổi, mọi dịp lễ. Với phương châm "Trao yêu thương qua từng
-                        món quà", chúng tôi cam kết mang đến sản phẩm chất lượng, chuẩn form, an toàn cho
-                        người dùng, giao hàng nhanh chóng cùng nhiều ưu đãi hấp dẫn.
+                        La Beaute Store là cửa hàng chuyên cung cấp các mẫu gấu bông và thú nhồi bông đáng yêu, phù hợp với mọi lứa tuổi và nhiều dịp khác nhau. 
+                        Với mong muốn trao yêu thương qua từng món quà, chúng tôi luôn chú trọng đến chất lượng sản phẩm, form dáng đẹp, an toàn khi sử dụng và giao hàng nhanh chóng. 
+                        Bên cạnh đó, cửa hàng thường xuyên có nhiều ưu đãi hấp dẫn để khách hàng dễ dàng lựa chọn món quà phù hợp.
+
                     </p>
                     <p>
-                        Ngoài ra, chúng tôi còn hỗ trợ đặt gấu bông theo yêu cầu riêng (size, màu sắc,
-                        phối phụ kiện), giúp bạn gửi gắm trọn vẹn tình cảm qua từng món quà ý nghĩa.
+                        Ngoài ra, chúng tôi còn nhận đặt gấu bông theo yêu cầu về kích thước, màu sắc và phụ kiện. 
+                        Bạn có thể tự chọn cách phối để tạo nên món quà phù hợp với sở thích và mang dấu ấn riêng, gửi gắm tình cảm đến người nhận.
                     </p>
                     <a href="products.php" class="btn-pink-gradient">
                         <i class="fa-solid fa-bag-shopping"></i> Mua Ngay
