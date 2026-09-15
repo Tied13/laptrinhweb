@@ -34,6 +34,7 @@
                 <p class="footer-col-title">Liên kết nhanh</p>
                 <p><a href="index.php">Trang chủ</a></p>
                 <p><a href="products.php">Sản phẩm</a></p>
+                <p><a href="about.php">Giới thiệu</a></p>
                 <p><a href="contact.php">Liên hệ</a></p>
             </div>
 
@@ -50,7 +51,7 @@
     <div class="footer-bottom">
         <div class="container">
             <p class="copyright">
-                &copy; <?php echo date('Y'); ?> © 2026 La Beaute Store. All rights reserved
+                &copy; <?php echo date('Y'); ?> © 2026 La Beaute Store. All rights reserved.
             </p>
         </div>
     </div>
