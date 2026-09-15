@@ -50,7 +50,7 @@
     <div class="footer-bottom">
         <div class="container">
             <p class="copyright">
-                &copy; <?php echo date('Y'); ?> La Beaute Store. Tất cả các quyền được bảo lưu.
+                &copy; <?php echo date('Y'); ?> © 2026 La Beaute Store. All rights reserved
             </p>
         </div>
     </div>
