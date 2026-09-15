@@ -1,5 +1,19 @@
 <!-- includes/navbar_admin.php -->
- 
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<style>
+    .admin-menu a i,
+    .admin-logout a i {
+        font-size: 1.15rem;
+        transition: transform 0.2s ease, color 0.2s ease;
+        display: inline-block;
+    }
+    .admin-menu a:hover i {
+        transform: scale(1.2);
+    }
+    .admin-logout a:hover i {
+        transform: scale(1.2);
+    }
+</style>
 <aside class="admin-sidebar">
     <div class="admin-logo">
         <h2>La Beaute Store</h2>
