@@ -620,6 +620,50 @@ input[type="file"] {
     animation: fadeSlideIn 0.3s ease;
 }
 
+.product-form-box input[type="file"][name="images[]"] {
+    width: 100%;
+    padding: 5px 8px;
+    border: none;
+    border-radius: 10px;
+    background: #f3e8ff;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px;
+    color: var(--dark-purple);
+    cursor: pointer;
+}
+
+.product-form-box input[type="file"][name="images[]"]:hover {
+    border-color: #7c3aed;
+    background: #ece0ff;
+}
+
+.product-form-box input[type="file"][name="images[]"]::file-selector-button {
+    height: 34px;
+    padding: 0 16px;
+    margin-right: 10px;
+    border: none;
+    border-radius: 6px;
+    background: var(--gradient-btn);
+    color: var(--white);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.product-form-box input[type="file"][name="images[]"]::file-selector-button:hover {
+    filter: brightness(1.08);
+}
+
+.product-form-box .form-group:has(input[name="images[]"])::after {
+    content: "Có thể chọn nhiều ảnh cùng lúc";
+    display: block;
+    margin-top: 6px;
+    font-size: 11.5px;
+    color: var(--gray-text);
+}
+
 .product-form-header {
     display: flex;
     align-items: center;
@@ -965,4 +1009,87 @@ input[type="file"] {
     .dashboard-stats {
         grid-template-columns: 1fr;
     }
+}
+
+.admin-form-box .ck.ck-editor {
+    width: 100%;
+    border: 1.5px solid var(--border-color);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: none;
+}
+
+.admin-form-box .ck.ck-toolbar {
+    background: #fff5f7;
+    border: none;
+    border-bottom: 1px solid var(--border-color);
+    padding: 7px 10px;
+}
+
+.admin-form-box .ck.ck-toolbar .ck-button {
+    color: #6b7280;
+    border-radius: 6px;
+}
+
+.admin-form-box .ck.ck-toolbar .ck-button:hover,
+.admin-form-box .ck.ck-toolbar .ck-button.ck-on {
+    background: #f3e8ff;
+    color: #a855f7;
+}
+
+.admin-form-box .ck.ck-editor__main > .ck-editor__editable {
+    min-height: 180px;
+    border: none;
+    background: #fff;
+    color: var(--text-color);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 14px;
+    line-height: 1.7;
+    padding: 14px 16px;
+    box-shadow: none;
+}
+
+.admin-form-box .ck.ck-editor:focus-within {
+    border-color: var(--primary-purple);
+    box-shadow: 0 0 0 3px rgba(178, 117, 255, 0.14);
+}
+
+.admin-form-box .ck.ck-toolbar .ck-toolbar__separator {
+    background: var(--border-color);
+}
+
+.admin-form-box input[type="file"],
+.product-form-box input[type="file"][name="images[]"] {
+    width: 100%;
+    min-height: 46px;
+    padding: 5px 8px;
+    border: none;
+    border-radius: 10px;
+    background: #fff5f7;
+    color: #6b7280;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.admin-form-box input[type="file"]::file-selector-button,
+.product-form-box input[type="file"][name="images[]"]::file-selector-button {
+    height: 34px;
+    padding: 0 16px;
+    margin-right: 10px;
+    border: none;
+    border-radius: 7px;
+    background: var(--gradient-btn);
+    color: var(--white);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.admin-form-box input[type="file"]::file-selector-button:hover,
+.product-form-box input[type="file"][name="images[]"]::file-selector-button:hover {
+    filter: brightness(1.08);
+    transform: translateY(-1px);
 }
