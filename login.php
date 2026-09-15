@@ -21,6 +21,15 @@
                 <input type="password" name="password" placeholder="Mật khẩu" required />
                 <button type="submit">Đăng nhập</button>
             </form>
+            <!-- Hiển thị thông báo lỗi từ Session -->
+            <?php if (!empty($_SESSION['error'])): ?>
+            <div class="alert-box alert-error">
+                <?php 
+                        echo htmlspecialchars($_SESSION['error']); 
+                        unset($_SESSION['error']); 
+                    ?>
+            </div>
+            <?php endif; ?>
             <p>Bạn chưa có tài khoản?
                 <a href="register.php">Đăng ký ngay</a>
             </p>

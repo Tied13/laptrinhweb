@@ -1,51 +1,101 @@
 <?php
-class Database {
-    private $host = "localhost";
+
+class Database
+{
+    private $host = "127.0.0.1";
+    private $port = "3306";
     private $db_name = "bangaubong_db";
     private $username = "root";
     private $password = "";
-    public $conn;
 
-    public function getConnection() {
-        $this->conn = null;
+    public $conn = null;
+
+    public function getConnection()
+    {
         try {
-            $this->conn = new PDO(
-                "mysql:host=" . $this->host . ";dbname=" . $this->db_name . ";charset=utf8mb4",
-                $this->username,
-                $this->password
-            );
-            $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            $this->conn->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+            $dsn = "mysql:host={$this->host};port={$this->port};dbname={$this->db_name};charset=utf8mb4";
 
-            // Tự động kiểm tra và khởi tạo tài khoản Admin mặc định
+            $this->conn = new PDO(
+                $dsn,
+                $this->username,
+                $this->password,
+                [
+                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                    PDO::ATTR_EMULATE_PREPARES => false
+                ]
+            );
+
+            // Tạo / cập nhật tài khoản admin
             $this->seedAdmin();
 
-        } catch (PDOException $exception) {
-            echo "Lỗi kết nối CSDL: " . $exception->getMessage();
+            return $this->conn;
+
+        } catch (PDOException $e) {
+            die("Lỗi kết nối CSDL: " . $e->getMessage());
         }
-        return $this->conn;
     }
 
-    private function seedAdmin() {
-        if (!$this->conn) return;
+    private function seedAdmin()
+    {
+        if (!$this->conn) {
+            return;
+        }
 
         try {
-            // Kiểm tra xem username 'admin' đã tồn tại hay chưa
-            $stmt = $this->conn->prepare("SELECT id FROM users WHERE username = 'admin' LIMIT 1");
-            $stmt->execute();
+            // Mật khẩu admin mặc định
+            $passwordHash = password_hash(
+                'password123',
+                PASSWORD_DEFAULT
+            );
+
+            // Kiểm tra admin đã tồn tại chưa
+            $stmt = $this->conn->prepare(
+                "SELECT id FROM users WHERE username = :username LIMIT 1"
+            );
+
+            $stmt->execute([
+                ':username' => 'admin'
+            ]);
+
             $admin = $stmt->fetch();
 
-            // Nếu chưa có tài khoản admin nào thì tự động tạo mới
             if (!$admin) {
-                $passwordHash = password_hash('password123', PASSWORD_DEFAULT);
+
+                // Chưa có admin -> tạo mới
                 $insert = $this->conn->prepare("
-                    INSERT INTO users (fullname, username, password, email, role, status)
-                    VALUES ('Quản Trị Viên', 'admin', :password, 'admin@toanbangau.com', 1, 1)
+                    INSERT INTO users
+                        (fullname, username, password, email, role, status)
+                    VALUES
+                        (:fullname, :username, :password, :email, 1, 1)
                 ");
-                $insert->execute([':password' => $passwordHash]);
+
+                $insert->execute([
+                    ':fullname' => 'Quản Trị Viên',
+                    ':username' => 'admin',
+                    ':password' => $passwordHash,
+                    ':email'    => 'admin@toanbangau.com'
+                ]);
+
+            } else {
+
+                // Đã có admin -> reset mật khẩu
+                $update = $this->conn->prepare("
+                    UPDATE users
+                    SET password = :password,
+                        role = 1,
+                        status = 1
+                    WHERE username = :username
+                ");
+
+                $update->execute([
+                    ':password' => $passwordHash,
+                    ':username' => 'admin'
+                ]);
             }
+
         } catch (PDOException $e) {
-            // Bỏ qua lỗi nếu bảng users chưa được import (tránh crash trang khi setup ban đầu)
+            // Bỏ qua lỗi nếu bảng users chưa tồn tại
         }
     }
 }

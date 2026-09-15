@@ -25,8 +25,10 @@ if (!empty($cart)) {
 }
 
 $error_msg = $_SESSION['error'] ?? '';
-$success_msg = $_SESSION['success'] ?? '';
-unset($_SESSION['error'], $_SESSION['success']);
+unset($_SESSION['error']);
+
+// Không lấy $_SESSION['success'] ở checkout
+unset($_SESSION['success']);
 ?>
 <!DOCTYPE html>
 <html lang="vi">

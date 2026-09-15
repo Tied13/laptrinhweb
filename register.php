@@ -36,19 +36,6 @@ if (session_status() === PHP_SESSION_NONE) {
         font-size: 24px;
     }
 
-    .alert-box {
-        padding: 12px;
-        border-radius: 8px;
-        margin-bottom: 20px;
-        font-size: 14px;
-        text-align: center;
-    }
-
-    .alert-error {
-        background-color: #fee2e2;
-        color: #dc2626;
-        border: 1px solid #fca5a5;
-    }
 
     .login form input {
         width: 100%;
