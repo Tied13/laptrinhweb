@@ -13,7 +13,6 @@ $orderModel = new Order($db);
 $action = $_GET['action'] ?? '';
 
 switch ($action) {
-    // 1. Cập nhật trạng thái đơn hàng từ Admin
     case 'updateStatus':
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
@@ -30,15 +29,10 @@ switch ($action) {
         header('Location: ../admin/order.php');
         exit();
 
-    // 2. Xóa đơn hàng từ Admin (Xóa chi tiết sản phẩm trước, xóa đơn sau)
     case 'delete':
         $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
         if ($id > 0) {
-            $result = method_exists($orderModel, 'deleteOrder') 
-                ? $orderModel->deleteOrder($id) 
-                : $orderModel->delete($id);
-
-            if ($result) {
+            if ($orderModel->deleteOrder($id)) {
                 $_SESSION['success'] = "Đã xóa thành công đơn hàng #$id!";
             } else {
                 $_SESSION['error'] = "Lỗi: Không thể xóa đơn hàng #$id!";
@@ -47,7 +41,6 @@ switch ($action) {
         header('Location: ../admin/order.php');
         exit();
 
-    // 3. Xử lý đặt hàng từ phía khách hàng (Checkout)
     case 'create':
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $user_id          = $_SESSION['user_id'] ?? null;
@@ -59,20 +52,15 @@ switch ($action) {
             $order_id = $orderModel->createOrder($user_id, $customer_name, $customer_phone, $customer_address, $total_price);
 
             if ($order_id) {
-                // Thêm danh sách sản phẩm từ giỏ hàng vào bảng order_details
                 if (isset($_SESSION['cart']) && !empty($_SESSION['cart'])) {
                     foreach ($_SESSION['cart'] as $item) {
                         $p_id  = $item['id'];
                         $qty   = $item['quantity'];
                         $price = $item['price'];
 
-                        if (method_exists($orderModel, 'addOrderDetail')) {
-                            $orderModel->addOrderDetail($order_id, $p_id, $qty, $price);
-                        } else {
-                            $orderModel->addOrderItem($order_id, $p_id, $qty, $price);
-                        }
+                        $orderModel->addOrderDetail($order_id, $p_id, $qty, $price);
                     }
-                    unset($_SESSION['cart']); // Xóa giỏ hàng sau khi lưu đơn thành công
+                    unset($_SESSION['cart']);
                 }
                 $_SESSION['success'] = "Đặt hàng thành công! Mã đơn của bạn là #$order_id";
                 header('Location: ../index.php');
