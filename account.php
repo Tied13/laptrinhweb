@@ -224,9 +224,11 @@ $statusMap = [
                                 <div class="empty-order">
                                     <i class="fa-solid fa-box-open"></i>
                                     <p>Bạn chưa có đơn hàng nào.</p>
-                                    <a href="products.php">
-                                        Mua sắm ngay
-                                    </a>
+                                    <div class="product-form-actions">
+                                        <a href="products.php" class="btn-checkout-gradient"
+                                            style="display: inline-flex; margin-top: 15px;">Mua
+                                            sắm ngay</a>
+                                    </div>
                                 </div>
                             </td>
                         </tr>
