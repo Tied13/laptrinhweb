@@ -6,92 +6,66 @@ if (session_status() === PHP_SESSION_NONE) {
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../models/Product.php';
 
-// Chỉ Admin (role = 1) mới được thêm/sửa/xóa sản phẩm
-if (!isset($_SESSION['role']) || (int)$_SESSION['role'] !== 1) {
-    header("Location: ../login.php");
-    exit();
-}
-
 $database = new Database();
 $db = $database->getConnection();
-$productModel = new Product($db);
+
+if (class_exists('Product')) {
+    $productModel = new Product($db);
+} else {
+    die("Fatal Error: Không tìm thấy Class Product!");
+}
 
 $action = $_GET['action'] ?? '';
 
-// 1. Thêm mới sản phẩm
-if (in_array($action, ['store', 'add']) && $_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name        = trim($_POST['name'] ?? '');
-    $category_id = (int)($_POST['category_id'] ?? 1);
-    $price       = (float)($_POST['price'] ?? 0);
-    $description = trim($_POST['description'] ?? '');
+switch ($action) {
+    case 'create':
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $name        = $_POST['name'] ?? '';
+            $price       = $_POST['price'] ?? 0;
+            $description = $_POST['description'] ?? '';
+            $category_id = $_POST['category_id'] ?? null;
+            $image       = $_POST['image'] ?? '';
 
-    $upload_dir = __DIR__ . '/../assets/uploads/products/';
-    if (!is_dir($upload_dir)) {
-        mkdir($upload_dir, 0777, true);
-    }
-
-    // Nhận ảnh đại diện từ form
-    $thumbnail_name = '';
-    $file = $_FILES['image'] ?? ($_FILES['thumbnail'] ?? null);
-    if ($file && $file['error'] === UPLOAD_ERR_OK) {
-        $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
-        $thumbnail_name = time() . '_thumb_' . uniqid() . '.' . $ext;
-        move_uploaded_file($file['tmp_name'], $upload_dir . $thumbnail_name);
-    }
-
-    // Gọi đúng 5 tham số (không còn quantity)
-    $product_id = $productModel->create($name, $category_id, $price, $description, $thumbnail_name);
-
-    // Lưu bộ ảnh phụ
-    if ($product_id && isset($_FILES['images']) && !empty($_FILES['images']['name'][0])) {
-        $total_files = count($_FILES['images']['name']);
-        for ($i = 0; $i < $total_files; $i++) {
-            if ($_FILES['images']['error'][$i] === UPLOAD_ERR_OK) {
-                $sub_ext  = pathinfo($_FILES['images']['name'][$i], PATHINFO_EXTENSION);
-                $sub_name = time() . '_gallery_' . $i . '_' . uniqid() . '.' . $sub_ext;
-                
-                if (move_uploaded_file($_FILES['images']['tmp_name'][$i], $upload_dir . $sub_name)) {
-                    $productModel->insertProductImage($product_id, $sub_name);
-                }
+            if (method_exists($productModel, 'create') && $productModel->create($name, $price, $description, $category_id, $image)) {
+                $_SESSION['success'] = "Thêm sản phẩm thành công!";
+            } else {
+                $_SESSION['error'] = "Thêm sản phẩm thất bại!";
             }
         }
-    }
+        header('Location: ../admin/product.php');
+        exit();
 
-    header("Location: ../admin/products.php");
-    exit();
+    case 'update':
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $id          = (int)($_POST['id'] ?? 0);
+            $name        = $_POST['name'] ?? '';
+            $price       = $_POST['price'] ?? 0;
+            $description = $_POST['description'] ?? '';
+            $category_id = $_POST['category_id'] ?? null;
+            $image       = $_POST['image'] ?? '';
+
+            if ($id > 0 && method_exists($productModel, 'update') && $productModel->update($id, $name, $price, $description, $category_id, $image)) {
+                $_SESSION['success'] = "Cập nhật sản phẩm #$id thành công!";
+            } else {
+                $_SESSION['error'] = "Cập nhật thất bại!";
+            }
+        }
+        header('Location: ../admin/product.php');
+        exit();
+
+    case 'delete':
+        $id = (int)($_GET['id'] ?? 0);
+        if ($id > 0) {
+            if (method_exists($productModel, 'delete') && $productModel->delete($id)) {
+                $_SESSION['success'] = "Đã xóa sản phẩm #$id!";
+            } else {
+                $_SESSION['error'] = "Không thể xóa sản phẩm (đang dính đơn hàng)!";
+            }
+        }
+        header('Location: ../admin/product.php');
+        exit();
+
+    default:
+        header('Location: ../admin/product.php');
+        exit();
 }
-
-// 2. Cập nhật sản phẩm
-if ($action === 'update' && $_SERVER['REQUEST_METHOD'] === 'POST') {
-    $id          = (int)$_POST['id'];
-    $name        = trim($_POST['name'] ?? '');
-    $category_id = (int)($_POST['category_id'] ?? 1);
-    $price       = (float)($_POST['price'] ?? 0);
-    $description = trim($_POST['description'] ?? '');
-
-    $upload_dir = __DIR__ . '/../assets/uploads/products/';
-    $thumbnail_name = null;
-
-    $file = $_FILES['image'] ?? ($_FILES['thumbnail'] ?? null);
-    if ($file && $file['error'] === UPLOAD_ERR_OK) {
-        $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
-        $thumbnail_name = time() . '_thumb_' . uniqid() . '.' . $ext;
-        move_uploaded_file($file['tmp_name'], $upload_dir . $thumbnail_name);
-    }
-
-    $productModel->update($id, $name, $category_id, $price, $description, $thumbnail_name);
-
-    header("Location: ../admin/products.php");
-    exit();
-}
-
-// 3. Xóa sản phẩm
-if ($action === 'delete' && !empty($_GET['id'])) {
-    $id = (int)$_GET['id'];
-    $productModel->delete($id);
-    header("Location: ../admin/products.php");
-    exit();
-}
-
-header("Location: ../admin/products.php");
-exit();
