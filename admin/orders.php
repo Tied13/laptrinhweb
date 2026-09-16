@@ -15,10 +15,8 @@ $database = new Database();
 $db = $database->getConnection();
 $orderModel = new Order($db);
 
-// Lấy toàn bộ đơn hàng đổ ra bảng danh sách
-$orders = method_exists($orderModel, 'getAllOrders') ? $orderModel->getAllOrders() : $orderModel->getAll();
+$orders = $orderModel->getAllOrders();
 
-// Đọc thông báo sau khi xử lý (flash message) rồi xóa khỏi session
 $success = $_SESSION['success'] ?? '';
 $error   = $_SESSION['error'] ?? '';
 unset($_SESSION['success'], $_SESSION['error']);
@@ -34,15 +32,14 @@ $viewOrder = null;
 $viewDetails = [];
 if (isset($_GET['view'])) {
     $viewId = (int)$_GET['view'];
-    $viewOrder = method_exists($orderModel, 'getOrderById') ? $orderModel->getOrderById($viewId) : $orderModel->getById($viewId);
+    $viewOrder = $orderModel->getOrderById($viewId);
     if ($viewOrder) { 
-        $viewDetails = method_exists($orderModel, 'getOrderDetails') ? $orderModel->getOrderDetails($viewId) : $orderModel->getItems($viewId); 
+        $viewDetails = $orderModel->getOrderDetails($viewId); 
     }
 }
 ?>
 <!DOCTYPE html>
 <html lang="vi">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -50,7 +47,6 @@ if (isset($_GET['view'])) {
     <link rel="stylesheet" href="../assets/css/admin.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
 </head>
-
 <body>
 
     <?php if (file_exists('../includes/navbar_admin.php')) include '../includes/navbar_admin.php'; ?>
@@ -118,7 +114,6 @@ if (isset($_GET['view'])) {
                         </td>
 
                         <td class="admin-actions">
-                            <!-- Đã sửa link trỏ về order.php chuẩn -->
                             <a href="order.php?view=<?php echo (int)$o['id']; ?>" class="btn btn-edit">
                                 <i class="bi bi-eye"></i> Xem
                             </a>
@@ -143,7 +138,6 @@ if (isset($_GET['view'])) {
             </tbody>
         </table>
 
-        <!-- Khối hiển thị chi tiết đơn hàng -->
         <?php if (isset($_GET['view'])): ?>
             <?php if ($viewOrder): ?>
             <div class="dashboard-card" style="margin-top: 20px; padding: 20px; border: 1px solid #ccc; border-radius: 8px; background: #fff;">
@@ -179,7 +173,6 @@ if (isset($_GET['view'])) {
                 <p style="font-weight:bold; margin-top:15px; font-size: 1.1em;">
                     Tổng tiền: <span style="color: red;"><?php echo number_format($viewOrder['total_price'] ?? $viewOrder['total'] ?? 0, 0, ',', '.'); ?>đ</span>
                 </p>
-                <!-- Đã sửa link Đóng về order.php -->
                 <a href="order.php" class="btn btn-edit" style="display: inline-block; margin-top: 10px; padding: 6px 15px; text-decoration: none;">Đóng</a>
             </div>
             <?php else: ?>
