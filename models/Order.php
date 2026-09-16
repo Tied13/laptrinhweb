@@ -20,7 +20,6 @@ class Order {
         $stmt->bindParam(":total_price", $total_price);
 
         if ($stmt->execute()) {
-            // Lấy ID đơn vừa tạo (SELECT + ORDER BY + LIMIT - đúng cú pháp giáo trình tr.104)
             $query_id = "SELECT id FROM " . $this->table . " ORDER BY id DESC LIMIT 1";
             $stmt_id = $this->conn->prepare($query_id);
             $stmt_id->execute();
@@ -61,6 +60,7 @@ class Order {
         return $stmt->fetch();
     }
 
+    // Lấy chi tiết đơn hàng kèm tên sản phẩm
     public function getOrderDetails($order_id) {
         $query = "SELECT order_details.*, products.name AS product_name
                   FROM order_details
@@ -85,13 +85,11 @@ class Order {
         try {
             $this->conn->beginTransaction();
 
-            // 1. Xóa các sản phẩm trong bảng chi tiết đơn hàng trước
             $queryDetails = "DELETE FROM order_details WHERE order_id = :order_id";
             $stmtDetails = $this->conn->prepare($queryDetails);
             $stmtDetails->bindParam(":order_id", $id);
             $stmtDetails->execute();
 
-            // 2. Xóa đơn hàng trong bảng orders
             $queryOrder = "DELETE FROM " . $this->table . " WHERE id = :id";
             $stmtOrder = $this->conn->prepare($queryOrder);
             $stmtOrder->bindParam(":id", $id);
@@ -107,7 +105,7 @@ class Order {
         }
     }
 
-    // Cập nhật trạng thái đơn hàng (0: Chờ xử lý, 1: Đang giao, 2: Hoàn thành, 3: Đã hủy)
+    // Cập nhật trạng thái đơn hàng
     public function updateStatus($id, $status) {
         $query = "UPDATE " . $this->table . " SET status = :status WHERE id = :id";
         $stmt = $this->conn->prepare($query);
@@ -116,7 +114,7 @@ class Order {
         return $stmt->execute();
     }
 
-    // Tính tổng doanh thu cho Dashboard (bỏ đơn đã hủy)
+    // Tính tổng doanh thu cho Dashboard
     public function getTotalRevenue() {
         $query = "SELECT SUM(total_price) AS total_revenue FROM " . $this->table . " WHERE status != 3";
         $stmt = $this->conn->prepare($query);
@@ -125,7 +123,7 @@ class Order {
         return $row['total_revenue'] ?? 0;
     }
 
-    // Đếm tổng số đơn hàng cho Dashboard
+    // Đếm tổng số đơn hàng
     public function countOrders() {
         $query = "SELECT COUNT(id) AS total_orders FROM " . $this->table;
         $stmt = $this->conn->prepare($query);
@@ -134,20 +132,14 @@ class Order {
         return $row['total_orders'] ?? 0;
     }
 
-    // Lấy lịch sử đơn hàng của user đang đăng nhập
+    // Lấy lịch sử đơn hàng của user
     public function getOrdersByUserId($userId) {
         $query = "SELECT * FROM " . $this->table . "
                   WHERE user_id = :user_id
                   ORDER BY created_at DESC";
 
         $stmt = $this->conn->prepare($query);
-
-        $stmt->bindParam(
-            ":user_id",
-            $userId,
-            PDO::PARAM_INT
-        );
-
+        $stmt->bindParam(":user_id", $userId, PDO::PARAM_INT);
         $stmt->execute();
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
