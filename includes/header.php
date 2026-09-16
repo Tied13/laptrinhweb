@@ -41,7 +41,7 @@ $search_val = $_GET['search'] ?? ($_GET['keyword'] ?? '');
             <!-- Trạng thái Đăng nhập / Tài khoản -->
             <?php if (isset($_SESSION['username'])): ?>
             <div class="user-logged-box" style="display: flex; align-items: center; gap: 8px;">
-                <a href="<?php echo ((int)($_SESSION['role'] ?? 0) === 1) ? 'admin/products.php' : '#'; ?>"
+                <a href="<?php echo ((int)($_SESSION['role'] ?? 0) === 1) ? 'admin/products.php' : 'account.php'; ?>"
                     class="user-account-btn" title="Trang tài khoản">
                     <i class="fa-regular fa-user"></i>
                     <span><?php echo htmlspecialchars($_SESSION['username']); ?></span>

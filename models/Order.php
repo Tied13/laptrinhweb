@@ -133,4 +133,23 @@ class Order {
         $row = $stmt->fetch();
         return $row['total_orders'] ?? 0;
     }
+
+    // Lấy lịch sử đơn hàng của user đang đăng nhập
+    public function getOrdersByUserId($userId) {
+        $query = "SELECT * FROM " . $this->table . "
+                  WHERE user_id = :user_id
+                  ORDER BY created_at DESC";
+
+        $stmt = $this->conn->prepare($query);
+
+        $stmt->bindParam(
+            ":user_id",
+            $userId,
+            PDO::PARAM_INT
+        );
+
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }

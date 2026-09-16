@@ -160,12 +160,12 @@ if (!empty($search)) {
                         <?php echo number_format($row['price'], 0, ',', '.'); ?> VNĐ
                     </div>
 
-                    <div class="product-actions">
-                        <a href="<?php echo $cartLink; ?>" class="btn-action btn-user-cart">
-                            <i class="fa-solid fa-cart-shopping"></i>
-                            Thêm giỏ hàng
-                        </a>
-                    </div>
+                    <a href="<?php echo $cartLink; ?>" class="btn-add-cart-grid">
+
+                        <i class="fa-solid fa-cart-shopping"></i>
+                        Thêm giỏ hàng
+
+                    </a>
 
                 </div>
 
