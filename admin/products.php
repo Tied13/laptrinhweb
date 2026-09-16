@@ -10,7 +10,6 @@ if (!isset($_SESSION['role']) || (int)$_SESSION['role'] !== 1) {
 
 // 1. Tự động kết nối DB nếu chưa đi qua Controller
 if (empty($products) || empty($categories)) {
-    // Tự động tìm đường dẫn file kết nối database
     $dbPath = file_exists(__DIR__ . '/../config/database.php') 
         ? __DIR__ . '/../config/database.php' 
         : __DIR__ . '/config/database.php';
@@ -20,7 +19,6 @@ if (empty($products) || empty($categories)) {
         $db = new Database();
         $conn = $db->getConnection();
 
-        // Lấy danh sách sản phẩm kèm tên danh mục
         $sqlProducts = "SELECT p.*, c.name AS category_name 
                         FROM products p 
                         LEFT JOIN categories c ON p.category_id = c.id 
@@ -29,17 +27,15 @@ if (empty($products) || empty($categories)) {
         $stmt->execute();
         $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // Lấy danh sách danh mục để đổ vào form Select
         $stmtCat = $conn->query("SELECT * FROM categories WHERE status = 1 ORDER BY id ASC");
         $categories = $stmtCat->fetchAll(PDO::FETCH_ASSOC);
     }
 }
-// Khởi tạo mảng dự phòng
+
 $categories = $categories ?? [];
 $products = $products ?? [];
 $product_edit = $product_edit ?? null;
 
-// Nếu bấm "Sửa" (?action=edit&id=X) thì lấy dữ liệu sản phẩm đổ vào form
 if (isset($conn) && ($_GET['action'] ?? '') === 'edit' && !empty($_GET['id'])) {
     $editId = (int)$_GET['id'];
     $stmtEditProduct = $conn->prepare("SELECT * FROM products WHERE id = :id LIMIT 1");
@@ -56,6 +52,8 @@ if (isset($conn) && ($_GET['action'] ?? '') === 'edit' && !empty($_GET['id'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản lý sản phẩm</title>
     <link rel="stylesheet" href="../assets/css/admin.css">
+    <!-- Thêm CDN Bootstrap Icons để hiển thị icon sidebar & icon bảng (Fix Lỗi 1.1) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
 </head>
 
 <body>
@@ -65,80 +63,52 @@ if (isset($conn) && ($_GET['action'] ?? '') === 'edit' && !empty($_GET['id'])) {
     <div class="admin-content">
         <div class="admin-page-header">
             <h2>Quản lý sản phẩm</h2>
-
             <button type="button" class="btn btn-primary" id="btn-add-product">
                 + Thêm sản phẩm
             </button>
         </div>
 
         <div class="admin-form-box product-form-box<?php echo isset($product_edit['id']) ? ' show' : ''; ?>" id="product-form">
-
             <div class="product-form-header">
                 <h3>
-                    <?php echo isset($product_edit['id'])
-                    ? 'Cập nhật sản phẩm'
-                    : 'Thêm sản phẩm mới'; ?>
+                    <?php echo isset($product_edit['id']) ? 'Cập nhật sản phẩm' : 'Thêm sản phẩm mới'; ?>
                 </h3>
-
-                <button type="button" class="form-close-btn" id="btn-close-product">
-                    ×
-                </button>
+                <button type="button" class="form-close-btn" id="btn-close-product">×</button>
             </div>
+            
             <form action="../controllers/ProductController.php?action=<?php echo isset($product_edit['id']) ? 'update' : 'store'; ?>" method="POST" enctype="multipart/form-data">
-                <!-- PHẦN BE2 -->
-                <input type="hidden" name="id" value="<?php echo isset($product_edit['id'])
-                    ? (int)$product_edit['id']
-                    : ''; ?>">
+                <input type="hidden" name="id" value="<?php echo isset($product_edit['id']) ? (int)$product_edit['id'] : ''; ?>">
 
                 <div class="form-group">
                     <label>Tên sản phẩm:</label>
-
-                    <input type="text" name="name" class="form-control" value="<?php echo isset($product_edit['name'])
-                        ? htmlspecialchars($product_edit['name'])
-                        : ''; ?>" required>
+                    <input type="text" name="name" class="form-control" value="<?php echo isset($product_edit['name']) ? htmlspecialchars($product_edit['name']) : ''; ?>" required>
                 </div>
 
                 <div class="form-group">
                     <label>Danh mục:</label>
-
                     <select name="category_id" class="form-control" required>
                         <option value="">-- Chọn danh mục --</option>
-
                         <?php foreach ($categories as $cat): ?>
-
-                        <option value="<?php echo (int)$cat['id']; ?>" <?php echo (
-                                isset($product_edit['category_id']) &&
-                                $product_edit['category_id'] == $cat['id']
-                            ) ? 'selected' : ''; ?>>
+                        <option value="<?php echo (int)$cat['id']; ?>" <?php echo (isset($product_edit['category_id']) && $product_edit['category_id'] == $cat['id']) ? 'selected' : ''; ?>>
                             <?php echo htmlspecialchars($cat['name']); ?>
                         </option>
-
                         <?php endforeach; ?>
                     </select>
                 </div>
 
                 <div class="form-group">
                     <label>Giá sản phẩm:</label>
-
-                    <input type="number" name="price" class="form-control" value="<?php echo isset($product_edit['price'])
-                        ? htmlspecialchars($product_edit['price'])
-                        : ''; ?>" required>
+                    <input type="number" name="price" class="form-control" value="<?php echo isset($product_edit['price']) ? htmlspecialchars($product_edit['price']) : ''; ?>" required>
                 </div>
 
-
-                <!-- PHẦN BE3 -->
                 <div class="form-group">
                     <label>Ảnh đại diện sản phẩm:</label>
-
                     <input type="file" name="image" class="form-control">
                 </div>
 
                 <div class="form-group">
                     <label>Mô tả chi tiết:</label>
-
-                    <textarea name="description" id="editor" class="form-control"><?php echo isset($product_edit['description'])
-                    ? htmlspecialchars($product_edit['description'])
-                    : ''; ?></textarea>
+                    <textarea name="description" id="editor" class="form-control"><?php echo isset($product_edit['description']) ? htmlspecialchars($product_edit['description']) : ''; ?></textarea>
                 </div>
 
                 <div class="form-group">
@@ -147,15 +117,9 @@ if (isset($conn) && ($_GET['action'] ?? '') === 'edit' && !empty($_GET['id'])) {
                 </div>
 
                 <div class="product-form-actions">
-                    <button type="submit" class="btn btn-primary">
-                        Lưu sản phẩm
-                    </button>
-
-                    <button type="button" class="btn btn-cancel" id="btn-cancel-product">
-                        Hủy
-                    </button>
+                    <button type="submit" class="btn btn-primary">Lưu sản phẩm</button>
+                    <button type="button" class="btn btn-cancel" id="btn-cancel-product">Hủy</button>
                 </div>
-
             </form>
         </div>
 
@@ -173,53 +137,32 @@ if (isset($conn) && ($_GET['action'] ?? '') === 'edit' && !empty($_GET['id'])) {
                         <th>Thao tác</th>
                     </tr>
                 </thead>
-
                 <tbody>
                     <?php if (!empty($products)): ?>
-
                     <?php foreach ($products as $p): ?>
-
                     <tr>
-                        <td>
-                            <?php echo (int)$p['id']; ?>
-                        </td>
+                        <td><?php echo (int)$p['id']; ?></td>
 
                         <td>
-                            <img
-                                src="../assets/uploads/products/<?php echo basename(htmlspecialchars($p['thumbnail'])); ?>"
-                                class="admin-thumb" onerror="this.src='https://placehold.co/100x100?text=No+Image';"
-                                alt="<?php echo htmlspecialchars($p['name']); ?>">
+                            <img src="../assets/uploads/products/<?php echo basename(htmlspecialchars($p['thumbnail'] ?? '')); ?>"
+                                 class="admin-thumb" 
+                                 onerror="this.src='https://placehold.co/100x100?text=No+Image';"
+                                 alt="<?php echo htmlspecialchars($p['name'] ?? ''); ?>">
                         </td>
 
-                        <td>
-                            <?php echo htmlspecialchars($p['name']); ?>
-                        </td>
+                        <td><?php echo htmlspecialchars($p['name'] ?? ''); ?></td>
 
-                        <td>
-                            <?php echo htmlspecialchars($p['category_name']); ?>
-                        </td>
+                        <td><?php echo htmlspecialchars($p['category_name'] ?? 'Chưa phân loại'); ?></td>
 
-                        <td>
-                            <?php echo number_format($p['price'], 0, ',', '.'); ?>đ
-                        </td>
+                        <td><?php echo number_format((float)($p['price'] ?? 0), 0, ',', '.'); ?>đ</td>
 
                         <td class="admin-actions">
-                            <a href="products.php?action=edit&id=<?php echo (int)$p['id']; ?>"
-                                class="btn btn-edit">
-                                Sửa
-                            </a>
-
-                            <a href="../controllers/ProductController.php?action=delete&id=<?php echo (int)$p['id']; ?>"
-                                class="btn btn-delete btn-delete-confirm">
-                                Xóa
-                            </a>
+                            <a href="products.php?action=edit&id=<?php echo (int)$p['id']; ?>" class="btn btn-edit">Sửa</a>
+                            <a href="../controllers/ProductController.php?action=delete&id=<?php echo (int)$p['id']; ?>" class="btn btn-delete btn-delete-confirm" onclick="return confirm('Bạn có chắc muốn xóa?');">Xóa</a>
                         </td>
                     </tr>
-
                     <?php endforeach; ?>
-
                     <?php else: ?>
-
                     <tr>
                         <td colspan="6">
                             <div class="empty-product">
@@ -228,17 +171,14 @@ if (isset($conn) && ($_GET['action'] ?? '') === 'edit' && !empty($_GET['id'])) {
                             </div>
                         </td>
                     </tr>
-
                     <?php endif; ?>
                 </tbody>
             </table>
         </div>
-
     </div>
 
     <script src="https://cdn.ckeditor.com/ckeditor5/41.0.0/classic/ckeditor.js"></script>
     <script src="../assets/js/admin.js"></script>
 
 </body>
-
 </html>
