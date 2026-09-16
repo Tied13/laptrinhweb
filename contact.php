@@ -16,7 +16,7 @@
             Liên Hệ
         </h2>
         <p class="contact-intro">
-            Cửa hàng bán gấu bông luôn sẵn sàng hỗ trợ và giải đáp mọi thắc mắc của bạn.
+            La Beaute Store luôn sẵn sàng hỗ trợ và giải đáp mọi thắc mắc của bạn.
             Hãy để lại thông tin, chúng tôi sẽ liên hệ với bạn sớm nhất.
         </p>
         <div class="contact-form">
