@@ -30,7 +30,7 @@ class Product {
 
     // BE 3: Lấy mảng ảnh phụ của sản phẩm
     public function getProductImages($product_id) {
-        $sql = "SELECT * FROM product_images WHERE product_id = :product_id";
+        $sql = "SELECT * FROM product_images WHERE product_id = :product_id ORDER BY id ASC";
         $stmt = $this->conn->prepare($sql);
         $stmt->bindParam(':product_id', $product_id, PDO::PARAM_INT);
         $stmt->execute();
