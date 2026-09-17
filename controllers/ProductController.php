@@ -59,7 +59,8 @@ function saveProduct($productModel, $db) {
         throw new RuntimeException('Yêu cầu không hợp lệ.');
     }
     $id = (int)($_POST['id'] ?? 0);
-    $name = trim($_POST['name'] ?? '');
+    $nameInput = $_POST['name'] ?? '';
+    $name = is_string($nameInput) ? trim($nameInput) : '';
     $category = (int)($_POST['category_id'] ?? 0);
     $priceInput = $_POST['price'] ?? '';
     $quantityInput = $_POST['quantity'] ?? '';
@@ -69,6 +70,12 @@ function saveProduct($productModel, $db) {
     }
     $price = (float)$priceInput;
     $quantity = (int)$quantityInput;
+    if (mb_strlen($name, 'UTF-8') > 255) {
+        throw new RuntimeException('Tên sản phẩm tối đa 255 ký tự.');
+    }
+    if ($price > 99999999.99 || $quantity > 2147483647) {
+        throw new RuntimeException('Giá hoặc số lượng vượt giới hạn cho phép.');
+    }
     $categoryStmt = $db->prepare('SELECT id FROM categories WHERE id = :id AND status = 1');
     $categoryStmt->execute([':id' => $category]);
     if (!$categoryStmt->fetchColumn()) throw new RuntimeException('Danh mục không hợp lệ.');
