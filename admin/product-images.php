@@ -52,6 +52,11 @@ function galleryImageUrl($value) {
         .be3-gallery-page .gallery-card button,
         .be3-gallery-page .gallery-form button { padding: 8px 14px; cursor: pointer; }
         .be3-gallery-page .gallery-card button { margin-top: 10px; }
+        .be3-gallery-page .gallery-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+        .be3-gallery-page .gallery-actions form { display: inline; }
+        .be3-gallery-page .gallery-actions button:disabled { cursor: not-allowed; opacity: .5; }
+        .be3-gallery-page .current-cover { display: flex; align-items: center; gap: 14px; margin: 16px 0; }
+        .be3-gallery-page .current-cover img { width: 90px; height: 90px; object-fit: cover; border-radius: 8px; }
     </style>
 </head>
 <body>
@@ -60,7 +65,11 @@ function galleryImageUrl($value) {
         <p><a href="products.php">← Danh sách sản phẩm</a> ·
             <a href="../product-detail.php?id=<?= $id ?>">Xem trang chi tiết</a></p>
         <h1>Ảnh phụ: <?= galleryEscape($product['name']) ?></h1>
-        <p>Ảnh đại diện được quản lý trong trang sửa sản phẩm. Trang này quản lý ảnh gallery.</p>
+        <div class="current-cover">
+            <img src="<?= galleryEscape(galleryImageUrl($product['thumbnail'])) ?>" alt="Ảnh đại diện hiện tại">
+            <span>Ảnh đại diện hiện tại</span>
+        </div>
+        <p>Chọn một ảnh phụ làm ảnh đại diện nếu cần. Ảnh đại diện cũ sẽ được giữ trong gallery.</p>
 
         <?php if ($success): ?><p class="notice success"><?= galleryEscape($success) ?></p><?php endif; ?>
         <?php if ($error): ?><p class="notice error"><?= galleryEscape($error) ?></p><?php endif; ?>
@@ -76,6 +85,7 @@ function galleryImageUrl($value) {
         </form>
 
         <h2>Gallery hiện tại (<?= count($images) ?> ảnh)</h2>
+        <p>Dùng nút lên và xuống để chọn thứ tự ảnh hiển thị trong trang chi tiết.</p>
         <?php if (!$images): ?>
             <p>Sản phẩm chưa có ảnh phụ.</p>
         <?php else: ?>
@@ -84,13 +94,31 @@ function galleryImageUrl($value) {
                     <div class="gallery-card">
                         <img src="<?= galleryEscape(galleryImageUrl($image['image_url'])) ?>"
                             alt="Ảnh phụ <?= $index + 1 ?> của <?= galleryEscape($product['name']) ?>">
-                        <form action="../controllers/ProductController.php?action=gallery_delete"
-                            method="post" onsubmit="return confirm('Xóa ảnh phụ này?')">
-                            <input type="hidden" name="csrf_token" value="<?= galleryEscape($_SESSION['csrf_token']) ?>">
-                            <input type="hidden" name="id" value="<?= $id ?>">
-                            <input type="hidden" name="image_id" value="<?= (int)$image['id'] ?>">
-                            <button type="submit">Xóa ảnh</button>
-                        </form>
+                        <div class="gallery-actions">
+                            <form action="../controllers/ProductController.php?action=gallery_cover" method="post">
+                                <input type="hidden" name="csrf_token" value="<?= galleryEscape($_SESSION['csrf_token']) ?>">
+                                <input type="hidden" name="id" value="<?= $id ?>">
+                                <input type="hidden" name="image_id" value="<?= (int)$image['id'] ?>">
+                                <button type="submit">Đặt làm ảnh đại diện</button>
+                            </form>
+                            <?php foreach (['up' => '↑ Lên', 'down' => '↓ Xuống'] as $direction => $label): ?>
+                                <form action="../controllers/ProductController.php?action=gallery_move" method="post">
+                                    <input type="hidden" name="csrf_token" value="<?= galleryEscape($_SESSION['csrf_token']) ?>">
+                                    <input type="hidden" name="id" value="<?= $id ?>">
+                                    <input type="hidden" name="image_id" value="<?= (int)$image['id'] ?>">
+                                    <input type="hidden" name="direction" value="<?= $direction ?>">
+                                    <button type="submit" <?= ($direction === 'up' && $index === 0) ||
+                                        ($direction === 'down' && $index === count($images) - 1) ? 'disabled' : '' ?>><?= $label ?></button>
+                                </form>
+                            <?php endforeach; ?>
+                            <form action="../controllers/ProductController.php?action=gallery_delete"
+                                method="post" onsubmit="return confirm('Xóa ảnh phụ này?')">
+                                <input type="hidden" name="csrf_token" value="<?= galleryEscape($_SESSION['csrf_token']) ?>">
+                                <input type="hidden" name="id" value="<?= $id ?>">
+                                <input type="hidden" name="image_id" value="<?= (int)$image['id'] ?>">
+                                <button type="submit">Xóa ảnh</button>
+                            </form>
+                        </div>
                     </div>
                 <?php endforeach; ?>
             </div>

@@ -168,6 +168,75 @@ switch ($action) {
         header('Location: ../admin/product-images.php?id=' . $id);
         exit();
 
+    case 'gallery_move':
+        $id = (int)($_POST['id'] ?? 0);
+        try {
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST' ||
+                !hash_equals($_SESSION['csrf_token'] ?? '', $_POST['csrf_token'] ?? '')) {
+                throw new RuntimeException('Yêu cầu không hợp lệ.');
+            }
+            $imageId = (int)($_POST['image_id'] ?? 0);
+            $direction = $_POST['direction'] ?? '';
+            if (!in_array($direction, ['up', 'down'], true)) {
+                throw new RuntimeException('Hướng di chuyển không hợp lệ.');
+            }
+            $images = $productModel->getProductImages($id);
+            $currentIndex = null;
+            foreach ($images as $index => $image) {
+                if ((int)$image['id'] === $imageId) {
+                    $currentIndex = $index;
+                    break;
+                }
+            }
+            if ($currentIndex === null) throw new RuntimeException('Không tìm thấy ảnh phụ.');
+            $targetIndex = $currentIndex + ($direction === 'up' ? -1 : 1);
+            if (!isset($images[$targetIndex])) throw new RuntimeException('Ảnh đã ở vị trí đầu hoặc cuối.');
+            $current = $images[$currentIndex];
+            $target = $images[$targetIndex];
+            $db->beginTransaction();
+            if (!$productModel->updateProductImageUrl($current['id'], $id, $target['image_url']) ||
+                !$productModel->updateProductImageUrl($target['id'], $id, $current['image_url'])) {
+                throw new RuntimeException('Không đổi được thứ tự ảnh.');
+            }
+            $db->commit();
+            $_SESSION['success'] = 'Đã đổi thứ tự ảnh.';
+        } catch (Throwable $e) {
+            if ($db->inTransaction()) $db->rollBack();
+            $_SESSION['error'] = $e->getMessage();
+        }
+        header('Location: ../admin/product-images.php?id=' . $id);
+        exit();
+
+    case 'gallery_cover':
+        $id = (int)($_POST['id'] ?? 0);
+        try {
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST' ||
+                !hash_equals($_SESSION['csrf_token'] ?? '', $_POST['csrf_token'] ?? '')) {
+                throw new RuntimeException('Yêu cầu không hợp lệ.');
+            }
+            $imageId = (int)($_POST['image_id'] ?? 0);
+            $product = $productModel->getProductById($id);
+            $image = $productModel->getProductImageById($imageId, $id);
+            if (!$product || !$image) throw new RuntimeException('Không tìm thấy sản phẩm hoặc ảnh phụ.');
+            $oldCover = $product['thumbnail'] ?? '';
+            $newCover = $image['image_url'];
+            if ($oldCover === '' || $oldCover === $newCover) {
+                throw new RuntimeException('Không thể đổi ảnh đại diện này.');
+            }
+            $db->beginTransaction();
+            if (!$productModel->updateProductThumbnail($id, $newCover) ||
+                !$productModel->updateProductImageUrl($imageId, $id, $oldCover)) {
+                throw new RuntimeException('Không cập nhật được ảnh đại diện.');
+            }
+            $db->commit();
+            $_SESSION['success'] = 'Đã đặt ảnh đại diện mới. Ảnh cũ được giữ trong gallery.';
+        } catch (Throwable $e) {
+            if ($db->inTransaction()) $db->rollBack();
+            $_SESSION['error'] = $e->getMessage();
+        }
+        header('Location: ../admin/product-images.php?id=' . $id);
+        exit();
+
     case 'delete':
         if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !hash_equals($_SESSION['csrf_token'] ?? '', $_POST['csrf_token'] ?? '')) {
             http_response_code(403);

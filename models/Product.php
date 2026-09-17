@@ -57,6 +57,28 @@ class Product {
         return $stmt->execute();
     }
 
+    public function updateProductImageUrl($image_id, $product_id, $image_url) {
+        $stmt = $this->conn->prepare(
+            "UPDATE product_images SET image_url = :image_url
+             WHERE id = :image_id AND product_id = :product_id"
+        );
+        $stmt->bindValue(':image_url', $image_url);
+        $stmt->bindValue(':image_id', (int)$image_id, PDO::PARAM_INT);
+        $stmt->bindValue(':product_id', (int)$product_id, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->rowCount() === 1;
+    }
+
+    public function updateProductThumbnail($product_id, $image_url) {
+        $stmt = $this->conn->prepare(
+            "UPDATE products SET thumbnail = :image_url WHERE id = :product_id"
+        );
+        $stmt->bindValue(':image_url', $image_url);
+        $stmt->bindValue(':product_id', (int)$product_id, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->rowCount() === 1;
+    }
+
     // Lấy danh sách sản phẩm phân trang & lọc
     public function getAll($keyword = '', $category_id = 0, $limit = 0, $offset = 0) {
         $sql = "SELECT p.*, c.name AS category_name 
