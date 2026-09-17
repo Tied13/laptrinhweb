@@ -36,6 +36,14 @@ function uploadProductPhoto($file, &$uploadedFiles) {
     return $path;
 }
 
+function localProductPhoto($value) {
+    if (!is_string($value) || $value === '') return null;
+    $prefix = 'assets/uploads/products/';
+    $name = str_starts_with($value, $prefix) ? substr($value, strlen($prefix)) : $value;
+    if (!preg_match('/^[A-Za-z0-9][A-Za-z0-9._-]*\.(?:jpe?g|png|webp|gif)$/i', $name)) return null;
+    return __DIR__ . '/../assets/uploads/products/' . $name;
+}
+
 function saveProductPhotos($productModel, $id, &$uploadedFiles) {
     if (!isset($_FILES['images']['name']) || !is_array($_FILES['images']['name'])) return;
     foreach ($_FILES['images']['name'] as $index => $unused) {
@@ -87,8 +95,9 @@ function saveProduct($productModel, $db) {
         foreach ($uploadedFiles as $path) @unlink(__DIR__ . '/../' . $path);
         throw $e;
     }
-    if ($thumbnail && $oldThumbnail && $oldThumbnail === 'assets/uploads/products/' . basename($oldThumbnail)) {
-        @unlink(__DIR__ . '/../' . $oldThumbnail);
+    $oldFile = localProductPhoto($oldThumbnail);
+    if ($thumbnail && $oldFile) {
+        @unlink($oldFile);
     }
     $_SESSION['success'] = 'Đã lưu sản phẩm.';
 }
@@ -119,7 +128,8 @@ switch ($action) {
                 if (!$productModel->delete($id)) throw new RuntimeException('Không thể xóa sản phẩm.');
                 $db->commit();
                 foreach (array_merge([$product['thumbnail']], array_column($images, 'image_url')) as $path) {
-                    if ($path === 'assets/uploads/products/' . basename($path)) @unlink(__DIR__ . '/../' . $path);
+                    $file = localProductPhoto($path);
+                    if ($file) @unlink($file);
                 }
                 $_SESSION['success'] = "Đã xóa sản phẩm #$id!";
             } catch (Throwable $e) {
