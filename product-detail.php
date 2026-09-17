@@ -102,6 +102,15 @@ $mainImageUrl = getProductImagePath($thumb);
         transition: all 0.3s ease;
     }
 
+    .gallery-open {
+        display: block;
+        width: 100%;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        cursor: zoom-in;
+    }
+
     .gallery-thumbnails {
         display: flex;
         gap: 10px;
@@ -131,6 +140,57 @@ $mainImageUrl = getProductImagePath($thumb);
         width: 100%;
         height: 100%;
         object-fit: cover;
+    }
+
+    .gallery-dialog {
+        width: min(92vw, 1000px);
+        max-height: 92vh;
+        padding: 16px;
+        border: 0;
+        border-radius: 14px;
+        background: #fff;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+    }
+
+    .gallery-dialog::backdrop {
+        background: rgba(0, 0, 0, 0.78);
+    }
+
+    .gallery-dialog-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 12px;
+    }
+
+    .gallery-dialog-controls {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+    }
+
+    .gallery-dialog-controls img {
+        width: min(75vw, 800px);
+        max-height: 75vh;
+        height: auto;
+        object-fit: contain;
+    }
+
+    .gallery-dialog button {
+        min-width: 36px;
+        min-height: 36px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background: #fff;
+        cursor: pointer;
+    }
+
+    .gallery-dialog button:focus-visible,
+    .gallery-open:focus-visible {
+        outline: 3px solid #a855f7;
+        outline-offset: 3px;
     }
 
     .product-info h1 {
@@ -262,9 +322,12 @@ $mainImageUrl = getProductImagePath($thumb);
             <!-- Cột hình ảnh & Gallery -->
             <div class="main-img-box">
                 <!-- 1. Chỉ 1 ảnh lớn duy nhất để hiển thị -->
-                <img id="mainImg" src="<?php echo htmlspecialchars($mainImageUrl); ?>"
-                    onerror="this.src='https://via.placeholder.com/450x450?text=No+Image';"
-                    alt="<?php echo htmlspecialchars($product['name']); ?>">
+                <button type="button" class="gallery-open" id="openGallery"
+                    aria-label="Xem ảnh sản phẩm kích thước lớn">
+                    <img id="mainImg" src="<?php echo htmlspecialchars($mainImageUrl); ?>"
+                        onerror="this.src='https://via.placeholder.com/450x450?text=No+Image';"
+                        alt="<?php echo htmlspecialchars($product['name']); ?>">
+                </button>
 
                 <?php
     // Gom tất cả ảnh vào 1 danh sách duy nhất
@@ -303,6 +366,17 @@ $mainImageUrl = getProductImagePath($thumb);
                     <?php endforeach; ?>
                 </div>
                 <?php endif; ?>
+                <dialog id="galleryDialog" class="gallery-dialog" aria-label="Ảnh sản phẩm kích thước lớn">
+                    <div class="gallery-dialog-header">
+                        <span id="galleryCount" aria-live="polite"></span>
+                        <button type="button" id="closeGallery" aria-label="Đóng ảnh lớn">×</button>
+                    </div>
+                    <div class="gallery-dialog-controls">
+                        <button type="button" id="previousGallery" aria-label="Ảnh trước">‹</button>
+                        <img id="galleryFullImage" alt="">
+                        <button type="button" id="nextGallery" aria-label="Ảnh tiếp theo">›</button>
+                    </div>
+                </dialog>
             </div>
 
             <!-- Cột thông tin sản phẩm -->
@@ -360,18 +434,52 @@ $mainImageUrl = getProductImagePath($thumb);
     <script src="assets/js/main.js"></script>
     <script>
     const mainImg = document.getElementById('mainImg');
-    document.querySelectorAll('.gallery-item').forEach(button => {
-        button.addEventListener('click', () => {
-            const image = button.querySelector('img');
-            if (!mainImg || !image) return;
-            mainImg.src = image.src;
-            mainImg.alt = image.alt;
-            document.querySelectorAll('.gallery-item').forEach(item => {
-                const active = item === button;
-                item.classList.toggle('active', active);
-                item.setAttribute('aria-pressed', String(active));
-            });
+    const thumbnailButtons = Array.from(document.querySelectorAll('.gallery-item'));
+    const images = thumbnailButtons.length
+        ? thumbnailButtons.map(button => button.querySelector('img'))
+        : [mainImg];
+    const dialog = document.getElementById('galleryDialog');
+    const fullImage = document.getElementById('galleryFullImage');
+    const galleryCount = document.getElementById('galleryCount');
+    let currentImage = 0;
+
+    function selectImage(index) {
+        currentImage = (index + images.length) % images.length;
+        const image = images[currentImage];
+        mainImg.src = image.src;
+        mainImg.alt = image.alt;
+        fullImage.src = image.src;
+        fullImage.alt = image.alt;
+        galleryCount.textContent = `Ảnh ${currentImage + 1} / ${images.length}`;
+        thumbnailButtons.forEach((button, position) => {
+            const active = position === currentImage;
+            button.classList.toggle('active', active);
+            button.setAttribute('aria-pressed', String(active));
         });
+    }
+
+    thumbnailButtons.forEach((button, index) => {
+        button.addEventListener('click', () => selectImage(index));
+    });
+    document.getElementById('openGallery').addEventListener('click', () => {
+        selectImage(currentImage);
+        dialog.showModal();
+        document.getElementById('closeGallery').focus();
+    });
+    document.getElementById('closeGallery').addEventListener('click', () => dialog.close());
+    document.getElementById('previousGallery').addEventListener('click', () => selectImage(currentImage - 1));
+    document.getElementById('nextGallery').addEventListener('click', () => selectImage(currentImage + 1));
+    dialog.addEventListener('keydown', event => {
+        if (event.key === 'ArrowLeft') {
+            event.preventDefault();
+            selectImage(currentImage - 1);
+        } else if (event.key === 'ArrowRight') {
+            event.preventDefault();
+            selectImage(currentImage + 1);
+        }
+    });
+    dialog.addEventListener('click', event => {
+        if (event.target === dialog) dialog.close();
     });
     </script>
 </body>
