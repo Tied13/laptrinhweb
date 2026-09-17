@@ -7,7 +7,11 @@ function cleanProductHtml($html) {
     libxml_use_internal_errors($previous);
     $root = $doc->getElementById('content');
     if (!$root) return '';
-    $allowed = ['p', 'br', 'strong', 'b', 'em', 'i', 'u', 'h2', 'h3', 'ul', 'ol', 'li', 'blockquote', 'a', 'img'];
+    $allowed = [
+        'p', 'br', 'strong', 'b', 'em', 'i', 'u', 'h2', 'h3', 'ul', 'ol', 'li',
+        'blockquote', 'a', 'img', 'figure', 'figcaption', 'table', 'thead',
+        'tbody', 'tfoot', 'tr', 'th', 'td'
+    ];
     $clean = function ($node) use (&$clean, $allowed) {
         foreach (iterator_to_array($node->childNodes) as $child) {
             if (!$child instanceof DOMElement) continue;

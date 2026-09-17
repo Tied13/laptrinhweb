@@ -113,15 +113,24 @@ $mainImageUrl = getProductImagePath($thumb);
         width: 70px;
         height: 70px;
         border-radius: 8px;
-        object-fit: cover;
         border: 2px solid transparent;
         cursor: pointer;
+        padding: 0;
+        background: #fff;
+        overflow: hidden;
         transition: border-color 0.2s;
     }
 
     .gallery-item:hover,
-    .gallery-item.active {
+    .gallery-item.active,
+    .gallery-item:focus-visible {
         border-color: #a855f7;
+    }
+
+    .gallery-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
     }
 
     .product-info h1 {
@@ -212,6 +221,30 @@ $mainImageUrl = getProductImagePath($thumb);
         line-height: 1.7;
     }
 
+    .desc-box figure {
+        max-width: 100%;
+        margin: 1em auto;
+        text-align: center;
+    }
+
+    .desc-box img {
+        max-width: 100%;
+        height: auto;
+    }
+
+    .desc-box table {
+        display: block;
+        max-width: 100%;
+        overflow-x: auto;
+        border-collapse: collapse;
+    }
+
+    .desc-box th,
+    .desc-box td {
+        border: 1px solid #e5e7eb;
+        padding: 8px;
+    }
+
     @media (max-width: 768px) {
         .detail-card {
             grid-template-columns: 1fr;
@@ -260,10 +293,13 @@ $mainImageUrl = getProductImagePath($thumb);
                 <?php if (count($uniqueImages) > 1): ?>
                 <div class="gallery-thumbnails">
                     <?php foreach ($uniqueImages as $idx => $imgSrc): ?>
-                    <img src="<?php echo htmlspecialchars($imgSrc); ?>"
-                        class="gallery-item <?php echo $idx === 0 ? 'active' : ''; ?>" onclick="changeImage(this)"
-                        onerror="this.src='https://via.placeholder.com/70x70?text=No+Image';"
-                        alt="Ảnh <?php echo $idx + 1; ?>">
+                    <button type="button" class="gallery-item <?php echo $idx === 0 ? 'active' : ''; ?>"
+                        aria-label="Xem ảnh sản phẩm <?php echo $idx + 1; ?>"
+                        aria-pressed="<?php echo $idx === 0 ? 'true' : 'false'; ?>">
+                        <img src="<?php echo htmlspecialchars($imgSrc); ?>"
+                            onerror="this.src='https://via.placeholder.com/70x70?text=No+Image';"
+                            alt="Ảnh <?php echo $idx + 1; ?>">
+                    </button>
                     <?php endforeach; ?>
                 </div>
                 <?php endif; ?>
@@ -323,15 +359,20 @@ $mainImageUrl = getProductImagePath($thumb);
 
     <script src="assets/js/main.js"></script>
     <script>
-    // Đổi ảnh khi nhấn vào danh sách gallery
-    function changeImage(el) {
-        const mainImg = document.getElementById('mainImg');
-        if (mainImg && el) {
-            mainImg.src = el.src;
-            document.querySelectorAll('.gallery-item').forEach(item => item.classList.remove('active'));
-            el.classList.add('active');
-        }
-    }
+    const mainImg = document.getElementById('mainImg');
+    document.querySelectorAll('.gallery-item').forEach(button => {
+        button.addEventListener('click', () => {
+            const image = button.querySelector('img');
+            if (!mainImg || !image) return;
+            mainImg.src = image.src;
+            mainImg.alt = image.alt;
+            document.querySelectorAll('.gallery-item').forEach(item => {
+                const active = item === button;
+                item.classList.toggle('active', active);
+                item.setAttribute('aria-pressed', String(active));
+            });
+        });
+    });
     </script>
 </body>
 
