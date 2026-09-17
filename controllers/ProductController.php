@@ -20,7 +20,7 @@ if ((int)($_SESSION['role'] ?? 0) !== 1) {
     exit('Không có quyền truy cập.');
 }
 
-function uploadProductPhoto($file) {
+function uploadProductPhoto($file, &$uploadedFiles) {
     if (($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) return null;
     if ($file['error'] !== UPLOAD_ERR_OK || !is_uploaded_file($file['tmp_name'])) throw new RuntimeException('Không tải được ảnh lên.');
     if ($file['size'] > 5 * 1024 * 1024) throw new RuntimeException('Mỗi ảnh phải nhỏ hơn 5 MB.');
@@ -31,15 +31,16 @@ function uploadProductPhoto($file) {
     if (!is_dir($directory) && !mkdir($directory, 0755, true)) throw new RuntimeException('Không tạo được thư mục ảnh.');
     $path = 'assets/uploads/products/' . bin2hex(random_bytes(16)) . '.' . $types[$mime];
     if (!move_uploaded_file($file['tmp_name'], __DIR__ . '/../' . $path)) throw new RuntimeException('Không lưu được ảnh.');
+    $uploadedFiles[] = $path;
     return $path;
 }
 
-function saveProductPhotos($productModel, $id) {
+function saveProductPhotos($productModel, $id, &$uploadedFiles) {
     if (!isset($_FILES['images']['name']) || !is_array($_FILES['images']['name'])) return;
     foreach ($_FILES['images']['name'] as $index => $unused) {
         $file = [];
         foreach (['name', 'type', 'tmp_name', 'error', 'size'] as $key) $file[$key] = $_FILES['images'][$key][$index] ?? null;
-        $path = uploadProductPhoto($file);
+        $path = uploadProductPhoto($file, $uploadedFiles);
         if ($path) $productModel->insertProductImage($id, $path);
     }
 }
@@ -94,15 +95,25 @@ function saveProduct($productModel, $db) {
     $categoryStmt->execute([':id' => $category]);
     if (!$categoryStmt->fetchColumn()) throw new RuntimeException('Danh mục không hợp lệ.');
     $description = cleanProductHtml($_POST['description'] ?? '');
-    $thumbnail = uploadProductPhoto($_FILES['image'] ?? []);
-    if ($id) {
-        if (!$productModel->getProductById($id)) throw new RuntimeException('Không tìm thấy sản phẩm.');
-        $productModel->update($id, $name, $category, $price, $description, $thumbnail, $quantity);
-    } else {
-        if (!$thumbnail) throw new RuntimeException('Vui lòng chọn ảnh đại diện.');
-        $id = $productModel->create($name, $category, $price, $description, $thumbnail, $quantity);
+    $uploadedFiles = [];
+    try {
+        $thumbnail = uploadProductPhoto($_FILES['image'] ?? [], $uploadedFiles);
+        if (!$id && !$thumbnail) throw new RuntimeException('Vui lòng chọn ảnh đại diện.');
+        $db->beginTransaction();
+        if ($id) {
+            if (!$productModel->getProductById($id)) throw new RuntimeException('Không tìm thấy sản phẩm.');
+            $productModel->update($id, $name, $category, $price, $description, $thumbnail, $quantity);
+        } else {
+            $id = $productModel->create($name, $category, $price, $description, $thumbnail, $quantity);
+            if (!$id) throw new RuntimeException('Không lưu được sản phẩm.');
+        }
+        saveProductPhotos($productModel, $id, $uploadedFiles);
+        $db->commit();
+    } catch (Throwable $e) {
+        if ($db->inTransaction()) $db->rollBack();
+        foreach ($uploadedFiles as $path) @unlink(__DIR__ . '/../' . $path);
+        throw $e;
     }
-    saveProductPhotos($productModel, $id);
     $_SESSION['success'] = 'Đã lưu sản phẩm.';
 }
 
