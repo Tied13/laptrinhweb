@@ -41,7 +41,7 @@ if (isset($_GET['view'])) {
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8">  
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản lý đơn hàng</title>
     <link rel="stylesheet" href="../assets/css/admin.css">
@@ -71,6 +71,7 @@ if (isset($_GET['view'])) {
         <table class="admin-table">
             <thead>
                 <tr>
+                    <th>STT</th>
                     <th>Mã đơn</th>
                     <th>Khách hàng</th>
                     <th>SĐT</th>
@@ -82,11 +83,14 @@ if (isset($_GET['view'])) {
             </thead>
             <tbody>
                 <?php if (!empty($orders)): ?>
-                    <?php foreach ($orders as $o):
+                    <?php 
+                    $stt = 1;
+                    foreach ($orders as $o):
                         $currentStatus = (int)($o['status'] ?? 0);
                         $badge = $statusMap[$currentStatus] ?? ['label' => 'Không rõ', 'class' => 'badge-default'];
                     ?>
                     <tr>
+                        <td><?php echo $stt++; ?></td>
                         <td>#<?php echo (int)$o['id']; ?></td>
                         <td><?php echo htmlspecialchars($o['customer_name'] ?? $o['fullname'] ?? 'N/A'); ?></td>
                         <td><?php echo htmlspecialchars($o['customer_phone'] ?? $o['phone'] ?? 'N/A'); ?></td>
@@ -127,7 +131,7 @@ if (isset($_GET['view'])) {
                     <?php endforeach; ?>
                 <?php else: ?>
                     <tr>
-                        <td colspan="7">
+                        <td colspan="8">
                             <div class="empty-category">
                                 <i class="bi bi-receipt"></i>
                                 <strong>🧾 Chưa có đơn hàng</strong>
