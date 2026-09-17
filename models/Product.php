@@ -37,6 +37,26 @@ class Product {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function getProductImageById($image_id, $product_id) {
+        $stmt = $this->conn->prepare(
+            "SELECT id, product_id, image_url FROM product_images
+             WHERE id = :image_id AND product_id = :product_id LIMIT 1"
+        );
+        $stmt->bindValue(':image_id', (int)$image_id, PDO::PARAM_INT);
+        $stmt->bindValue(':product_id', (int)$product_id, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function deleteProductImage($image_id, $product_id) {
+        $stmt = $this->conn->prepare(
+            "DELETE FROM product_images WHERE id = :image_id AND product_id = :product_id"
+        );
+        $stmt->bindValue(':image_id', (int)$image_id, PDO::PARAM_INT);
+        $stmt->bindValue(':product_id', (int)$product_id, PDO::PARAM_INT);
+        return $stmt->execute();
+    }
+
     // Lấy danh sách sản phẩm phân trang & lọc
     public function getAll($keyword = '', $category_id = 0, $limit = 0, $offset = 0) {
         $sql = "SELECT p.*, c.name AS category_name 

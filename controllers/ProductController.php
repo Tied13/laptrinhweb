@@ -113,6 +113,61 @@ switch ($action) {
         header('Location: ../admin/products.php');
         exit();
 
+    case 'gallery_upload':
+        $id = (int)($_POST['id'] ?? 0);
+        try {
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST' ||
+                !hash_equals($_SESSION['csrf_token'] ?? '', $_POST['csrf_token'] ?? '')) {
+                throw new RuntimeException('Yêu cầu không hợp lệ.');
+            }
+            if ($id < 1 || !$productModel->getProductById($id)) {
+                throw new RuntimeException('Không tìm thấy sản phẩm.');
+            }
+            $names = $_FILES['images']['name'] ?? [];
+            if (!is_array($names) || !array_filter($names)) {
+                throw new RuntimeException('Vui lòng chọn ít nhất một ảnh.');
+            }
+            if (count($names) > 20) throw new RuntimeException('Mỗi lần tải tối đa 20 ảnh.');
+            $uploadedFiles = [];
+            try {
+                $db->beginTransaction();
+                saveProductPhotos($productModel, $id, $uploadedFiles);
+                $db->commit();
+            } catch (Throwable $e) {
+                if ($db->inTransaction()) $db->rollBack();
+                foreach ($uploadedFiles as $path) @unlink(__DIR__ . '/../' . $path);
+                throw $e;
+            }
+            $_SESSION['success'] = 'Đã thêm ảnh vào gallery.';
+        } catch (Throwable $e) {
+            $_SESSION['error'] = $e->getMessage();
+        }
+        header('Location: ../admin/product-images.php?id=' . $id);
+        exit();
+
+    case 'gallery_delete':
+        $id = (int)($_POST['id'] ?? 0);
+        try {
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST' ||
+                !hash_equals($_SESSION['csrf_token'] ?? '', $_POST['csrf_token'] ?? '')) {
+                throw new RuntimeException('Yêu cầu không hợp lệ.');
+            }
+            $imageId = (int)($_POST['image_id'] ?? 0);
+            $image = $productModel->getProductImageById($imageId, $id);
+            if (!$image) throw new RuntimeException('Không tìm thấy ảnh phụ của sản phẩm.');
+            $db->beginTransaction();
+            $productModel->deleteProductImage($imageId, $id);
+            $db->commit();
+            $file = localProductPhoto($image['image_url']);
+            if ($file) @unlink($file);
+            $_SESSION['success'] = 'Đã xóa ảnh phụ.';
+        } catch (Throwable $e) {
+            if ($db->inTransaction()) $db->rollBack();
+            $_SESSION['error'] = $e->getMessage();
+        }
+        header('Location: ../admin/product-images.php?id=' . $id);
+        exit();
+
     case 'delete':
         if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !hash_equals($_SESSION['csrf_token'] ?? '', $_POST['csrf_token'] ?? '')) {
             http_response_code(403);

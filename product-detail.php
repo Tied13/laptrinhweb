@@ -392,6 +392,9 @@ $mainImageUrl = getProductImagePath($thumb);
                 </div>
                 <?php $inStock = (int)($product['quantity'] ?? 0) > 0; ?>
                 <p><?php echo $inStock ? 'Còn ' . (int)$product['quantity'] . ' sản phẩm' : 'Sản phẩm đã hết hàng'; ?></p>
+                <?php if ((int)($_SESSION['role'] ?? 0) === 1): ?>
+                    <p><a href="admin/product-images.php?id=<?php echo (int)$product['id']; ?>">Quản lý ảnh gallery</a></p>
+                <?php endif; ?>
 
                 <form action="cart.php?action=add" method="POST" id="cartForm">
                     <input type="hidden" name="product_id" value="<?php echo (int)$product['id']; ?>">
