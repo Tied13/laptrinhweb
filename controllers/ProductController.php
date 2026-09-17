@@ -141,10 +141,20 @@ switch ($action) {
         }
         $id = (int)($_POST['id'] ?? 0);
         if ($id > 0) {
-            if (method_exists($productModel, 'delete') && $productModel->delete($id)) {
+            try {
+                $product = $productModel->getProductById($id);
+                if (!$product) throw new RuntimeException('Không tìm thấy sản phẩm.');
+                $images = $productModel->getProductImages($id);
+                $db->beginTransaction();
+                if (!$productModel->delete($id)) throw new RuntimeException('Không thể xóa sản phẩm.');
+                $db->commit();
+                foreach (array_merge([$product['thumbnail']], array_column($images, 'image_url')) as $path) {
+                    if ($path === 'assets/uploads/products/' . basename($path)) @unlink(__DIR__ . '/../' . $path);
+                }
                 $_SESSION['success'] = "Đã xóa sản phẩm #$id!";
-            } else {
-                $_SESSION['error'] = "Không thể xóa sản phẩm (đang dính đơn hàng)!";
+            } catch (Throwable $e) {
+                if ($db->inTransaction()) $db->rollBack();
+                $_SESSION['error'] = 'Không thể xóa sản phẩm (có thể đang thuộc đơn hàng).';
             }
         }
         header('Location: ../admin/products.php');

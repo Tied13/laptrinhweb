@@ -156,12 +156,8 @@ class Product {
         return $stmt->execute();
     }
 
-    // Xóa sản phẩm và dọn sạch bảng gallery liên quan
+    // Khóa ngoại product_images tự xóa ảnh phụ khi sản phẩm được xóa.
     public function delete($id) {
-        $stmt_img = $this->conn->prepare("DELETE FROM product_images WHERE product_id = :id");
-        $stmt_img->bindValue(':id', (int)$id, PDO::PARAM_INT);
-        $stmt_img->execute();
-
         $sql = "DELETE FROM " . $this->table . " WHERE id = :id";
         $stmt = $this->conn->prepare($sql);
         $stmt->bindValue(':id', (int)$id, PDO::PARAM_INT);
