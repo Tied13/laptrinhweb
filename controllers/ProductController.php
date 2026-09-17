@@ -75,16 +75,24 @@ function cleanProductHtml($html) {
     return $output;
 }
 
-function saveProduct($productModel) {
+function saveProduct($productModel, $db) {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !hash_equals($_SESSION['csrf_token'] ?? '', $_POST['csrf_token'] ?? '')) {
         throw new RuntimeException('Yêu cầu không hợp lệ.');
     }
     $id = (int)($_POST['id'] ?? 0);
     $name = trim($_POST['name'] ?? '');
     $category = (int)($_POST['category_id'] ?? 0);
-    $price = (float)($_POST['price'] ?? -1);
-    $quantity = (int)($_POST['quantity'] ?? -1);
-    if ($name === '' || $category < 1 || $price < 0 || $quantity < 0) throw new RuntimeException('Thông tin sản phẩm không hợp lệ.');
+    $priceInput = $_POST['price'] ?? '';
+    $quantityInput = $_POST['quantity'] ?? '';
+    if ($name === '' || $category < 1 || !is_numeric($priceInput) || (float)$priceInput < 0 ||
+        filter_var($quantityInput, FILTER_VALIDATE_INT) === false || (int)$quantityInput < 0) {
+        throw new RuntimeException('Thông tin sản phẩm không hợp lệ.');
+    }
+    $price = (float)$priceInput;
+    $quantity = (int)$quantityInput;
+    $categoryStmt = $db->prepare('SELECT id FROM categories WHERE id = :id AND status = 1');
+    $categoryStmt->execute([':id' => $category]);
+    if (!$categoryStmt->fetchColumn()) throw new RuntimeException('Danh mục không hợp lệ.');
     $description = cleanProductHtml($_POST['description'] ?? '');
     $thumbnail = uploadProductPhoto($_FILES['image'] ?? []);
     if ($id) {
@@ -104,7 +112,7 @@ switch ($action) {
     case 'store':
     case 'create':
     case 'update':
-        try { saveProduct($productModel); }
+        try { saveProduct($productModel, $db); }
         catch (Throwable $e) { $_SESSION['error'] = $e->getMessage(); }
         header('Location: ../admin/products.php');
         exit();
