@@ -36,6 +36,14 @@ function getCartTotal($db, $cart) {
     return $total;
 }
 
+function productStock($db, $productId) {
+    if ($productId < 1) return 0;
+    $stmt = $db->prepare('SELECT quantity FROM products WHERE id = :id');
+    $stmt->execute([':id' => $productId]);
+    $stock = $stmt->fetchColumn();
+    return $stock === false ? 0 : max(0, (int)$stock);
+}
+
 $action = $_GET['action'] ?? '';
 
 // 1. Thêm vào giỏ hàng từ Form (POST add_to_cart hoặc ?action=add)
@@ -44,11 +52,8 @@ if (($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) || (
     $quantity = isset($_POST['quantity']) ? max(1, intval($_POST['quantity'])) : 1;
 
     if ($product_id > 0) {
-        if (isset($_SESSION['cart'][$product_id])) {
-            $_SESSION['cart'][$product_id] += $quantity;
-        } else {
-            $_SESSION['cart'][$product_id] = $quantity;
-        }
+        $stock = productStock($conn, $product_id);
+        if ($stock > 0) $_SESSION['cart'][$product_id] = min($stock, ($_SESSION['cart'][$product_id] ?? 0) + $quantity);
     }
     header('Location: cart.php');
     exit();
@@ -58,7 +63,8 @@ if (($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) || (
 if ($action === 'add' && isset($_GET['id']) && $_SERVER['REQUEST_METHOD'] !== 'POST') {
     $product_id = intval($_GET['id']);
     if ($product_id > 0) {
-        $_SESSION['cart'][$product_id] = ($_SESSION['cart'][$product_id] ?? 0) + 1;
+        $stock = productStock($conn, $product_id);
+        if ($stock > 0) $_SESSION['cart'][$product_id] = min($stock, ($_SESSION['cart'][$product_id] ?? 0) + 1);
     }
     header('Location: cart.php');
     exit();
@@ -70,8 +76,9 @@ if (isset($_POST['update_cart']) || ($action === 'update' && $_SERVER['REQUEST_M
         foreach ($_POST['qty'] as $p_id => $q) {
             $p_id = intval($p_id);
             $q = intval($q);
-            if ($q > 0) {
-                $_SESSION['cart'][$p_id] = $q;
+            $stock = productStock($conn, $p_id);
+            if ($q > 0 && $stock > 0) {
+                $_SESSION['cart'][$p_id] = min($q, $stock);
             } else {
                 unset($_SESSION['cart'][$p_id]);
             }
