@@ -130,8 +130,17 @@ if (isset($conn) && ($_GET['action'] ?? '') === 'edit' && !empty($_GET['id'])) {
 
                 <div class="form-group">
                     <label>Ảnh đại diện sản phẩm:</label>
-                    <input type="file" name="image" class="form-control" accept="image/jpeg,image/png,image/webp,image/gif"
+                    <input type="file" id="product-thumbnail" name="image" class="form-control" accept="image/jpeg,image/png,image/webp,image/gif"
                         <?php echo $product_edit ? '' : 'required'; ?>>
+                    <small>Mỗi ảnh tối đa 5 MB.</small>
+                    <?php if ($product_edit && !empty($product_edit['thumbnail'])): ?>
+                        <?php $currentThumbnail = $product_edit['thumbnail'];
+                            $currentThumbnail = preg_match('~^(https?://|assets/)~i', $currentThumbnail)
+                                ? $currentThumbnail : 'assets/uploads/products/' . basename($currentThumbnail); ?>
+                        <img src="<?php echo preg_match('~^https?://~i', $currentThumbnail) ? '' : '../'; ?><?php echo htmlspecialchars($currentThumbnail); ?>"
+                            width="80" alt="Ảnh đại diện hiện tại">
+                    <?php endif; ?>
+                    <div id="thumbnail-preview"></div>
                 </div>
 
                 <div class="form-group">
@@ -142,7 +151,8 @@ if (isset($conn) && ($_GET['action'] ?? '') === 'edit' && !empty($_GET['id'])) {
 
                 <div class="form-group">
                     <label>Chọn nhiều ảnh phụ:</label>
-                    <input type="file" name="images[]" multiple accept="image/jpeg,image/png,image/webp,image/gif">
+                    <input type="file" id="product-gallery" name="images[]" multiple accept="image/jpeg,image/png,image/webp,image/gif">
+                    <div id="gallery-preview"></div>
                     <?php foreach ($gallery as $photo): ?>
                         <img src="../<?php echo htmlspecialchars($photo['image_url']); ?>" width="70" alt="Ảnh phụ hiện tại">
                     <?php endforeach; ?>

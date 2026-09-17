@@ -7,7 +7,34 @@ document.addEventListener('DOMContentLoaded', function () {
     setupCKEditor();
     setupRevenueChart();
     setupProductForm();
+    setupProductImagePreview();
 });
+
+function setupProductImagePreview() {
+    function preview(inputId, targetId) {
+        const input = document.getElementById(inputId);
+        const target = document.getElementById(targetId);
+        if (!input || !target) return;
+        input.addEventListener('change', function () {
+            target.replaceChildren();
+            Array.from(input.files).forEach(function (file) {
+                if (!file.type.startsWith('image/')) return;
+                const img = document.createElement('img');
+                const url = URL.createObjectURL(file);
+                img.src = url;
+                img.alt = file.name;
+                img.width = 70;
+                img.height = 70;
+                img.style.objectFit = 'cover';
+                img.style.margin = '8px 8px 0 0';
+                img.onload = function () { URL.revokeObjectURL(url); };
+                target.appendChild(img);
+            });
+        });
+    }
+    preview('product-thumbnail', 'thumbnail-preview');
+    preview('product-gallery', 'gallery-preview');
+}
 
 function setActiveMenu() {
     const currentPath = window.location.pathname;
