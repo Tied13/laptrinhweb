@@ -44,11 +44,13 @@ require_once __DIR__ . '/controllers/CartController.php';
                                 $subtotal = $item['price'] * $qty;
                                 $total_all += $subtotal;
                                 $thumb = $item['thumbnail'] ?? ($item['image'] ?? '');
+                                $thumbUrl = preg_match('~^(https?://|assets/)~i', $thumb)
+                                    ? $thumb : 'assets/uploads/products/' . basename($thumb);
                         ?>
                         <tr>
                             <td>
                                 <div class="cart-product-info">
-                                    <img src="assets/uploads/products/<?php echo htmlspecialchars($thumb); ?>"
+                                    <img src="<?php echo htmlspecialchars($thumbUrl, ENT_QUOTES, 'UTF-8'); ?>"
                                         onerror="this.src='https://via.placeholder.com/80?text=No+Image';"
                                         alt="<?php echo htmlspecialchars($item['name']); ?>">
                                     <span><?php echo htmlspecialchars($item['name']); ?></span>
