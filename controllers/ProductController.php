@@ -96,12 +96,15 @@ function saveProduct($productModel, $db) {
     if (!$categoryStmt->fetchColumn()) throw new RuntimeException('Danh mục không hợp lệ.');
     $description = cleanProductHtml($_POST['description'] ?? '');
     $uploadedFiles = [];
+    $oldThumbnail = null;
     try {
         $thumbnail = uploadProductPhoto($_FILES['image'] ?? [], $uploadedFiles);
         if (!$id && !$thumbnail) throw new RuntimeException('Vui lòng chọn ảnh đại diện.');
         $db->beginTransaction();
         if ($id) {
-            if (!$productModel->getProductById($id)) throw new RuntimeException('Không tìm thấy sản phẩm.');
+            $existing = $productModel->getProductById($id);
+            if (!$existing) throw new RuntimeException('Không tìm thấy sản phẩm.');
+            $oldThumbnail = $existing['thumbnail'] ?? null;
             $productModel->update($id, $name, $category, $price, $description, $thumbnail, $quantity);
         } else {
             $id = $productModel->create($name, $category, $price, $description, $thumbnail, $quantity);
@@ -113,6 +116,9 @@ function saveProduct($productModel, $db) {
         if ($db->inTransaction()) $db->rollBack();
         foreach ($uploadedFiles as $path) @unlink(__DIR__ . '/../' . $path);
         throw $e;
+    }
+    if ($thumbnail && $oldThumbnail && $oldThumbnail === 'assets/uploads/products/' . basename($oldThumbnail)) {
+        @unlink(__DIR__ . '/../' . $oldThumbnail);
     }
     $_SESSION['success'] = 'Đã lưu sản phẩm.';
 }
