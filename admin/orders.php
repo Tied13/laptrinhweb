@@ -114,7 +114,7 @@ if (isset($_GET['view'])) {
                         </td>
 
                         <td class="admin-actions">
-                            <a href="order.php?view=<?php echo (int)$o['id']; ?>" class="btn btn-edit">
+                            <a href="orders.php?view=<?php echo (int)$o['id']; ?>" class="btn btn-edit">
                                 <i class="bi bi-eye"></i> Xem
                             </a>
                             <a href="../controllers/OrderController.php?action=delete&id=<?php echo (int)$o['id']; ?>" 
@@ -173,7 +173,7 @@ if (isset($_GET['view'])) {
                 <p style="font-weight:bold; margin-top:15px; font-size: 1.1em;">
                     Tổng tiền: <span style="color: red;"><?php echo number_format($viewOrder['total_price'] ?? $viewOrder['total'] ?? 0, 0, ',', '.'); ?>đ</span>
                 </p>
-                <a href="order.php" class="btn btn-edit" style="display: inline-block; margin-top: 10px; padding: 6px 15px; text-decoration: none;">Đóng</a>
+                <a href="orders.php" class="btn btn-edit" style="display: inline-block; margin-top: 10px; padding: 6px 15px; text-decoration: none;">Đóng</a>
             </div>
             <?php else: ?>
             <div class="alert alert-danger" style="margin-top: 20px;">Đơn hàng không tồn tại.</div>
