@@ -4,6 +4,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 require_once __DIR__ . '/config/database.php';
+require_once __DIR__ . '/includes/product_html.php';
 
 // Tự động nạp file Model Product nếu có
 if (file_exists(__DIR__ . '/models/Product.php')) {
@@ -307,7 +308,7 @@ $mainImageUrl = getProductImagePath($thumb);
                 <div class="desc-box">
                     <h3 style="color: #9333ea; margin-bottom: 10px;">Mô tả sản phẩm</h3>
                     <div>
-                        <?php echo $product['description'] ?: 'Chưa có mô tả cho sản phẩm này.'; ?>
+                        <?php echo cleanProductHtml($product['description'] ?? '') ?: 'Chưa có mô tả cho sản phẩm này.'; ?>
                     </div>
                 </div>
             </div>
