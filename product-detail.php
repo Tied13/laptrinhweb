@@ -280,6 +280,8 @@ $mainImageUrl = getProductImagePath($thumb);
                 <div class="detail-price">
                     <?php echo number_format($product['price'], 0, ',', '.'); ?> VNĐ
                 </div>
+                <?php $inStock = (int)($product['quantity'] ?? 0) > 0; ?>
+                <p><?php echo $inStock ? 'Còn ' . (int)$product['quantity'] . ' sản phẩm' : 'Sản phẩm đã hết hàng'; ?></p>
 
                 <form action="cart.php?action=add" method="POST" id="cartForm">
                     <input type="hidden" name="product_id" value="<?php echo (int)$product['id']; ?>">
@@ -292,7 +294,9 @@ $mainImageUrl = getProductImagePath($thumb);
                         <button type="button" class="btn-qty" id="btnPlus">+</button>
                     </div>
 
-                    <?php if ($isLoggedIn): ?>
+                    <?php if (!$inStock): ?>
+                    <button type="button" class="btn-add-cart-detail" disabled>Hết hàng</button>
+                    <?php elseif ($isLoggedIn): ?>
                     <button type="submit" name="add_to_cart" class="btn-add-cart-detail">
                         <i class="fa-solid fa-cart-shopping"></i> Thêm vào giỏ hàng
                     </button>
@@ -319,25 +323,6 @@ $mainImageUrl = getProductImagePath($thumb);
 
     <script src="assets/js/main.js"></script>
     <script>
-    // Tăng giảm số lượng
-    const inputQty = document.getElementById('inputQty');
-    const btnMinus = document.getElementById('btnMinus');
-    const btnPlus = document.getElementById('btnPlus');
-
-    if (btnMinus && btnPlus && inputQty) {
-        btnMinus.addEventListener('click', () => {
-            let current = parseInt(inputQty.value) || 1;
-            if (current > 1) {
-                inputQty.value = current - 1;
-            }
-        });
-
-        btnPlus.addEventListener('click', () => {
-            let current = parseInt(inputQty.value) || 1;
-            inputQty.value = current + 1;
-        });
-    }
-
     // Đổi ảnh khi nhấn vào danh sách gallery
     function changeImage(el) {
         const mainImg = document.getElementById('mainImg');
