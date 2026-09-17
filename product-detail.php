@@ -286,7 +286,8 @@ $mainImageUrl = getProductImagePath($thumb);
                     <div class="quantity-wrapper">
                         <label style="font-weight: 600; margin-right: 10px;">Số lượng:</label>
                         <button type="button" class="btn-qty" id="btnMinus">-</button>
-                        <input type="number" name="quantity" id="inputQty" class="input-qty" value="1" min="1">
+                        <input type="number" name="quantity" id="inputQty" class="input-qty" value="1" min="1"
+                            max="<?php echo max(1, (int)($product['quantity'] ?? 1)); ?>">
                         <button type="button" class="btn-qty" id="btnPlus">+</button>
                     </div>
 
@@ -306,7 +307,7 @@ $mainImageUrl = getProductImagePath($thumb);
                 <div class="desc-box">
                     <h3 style="color: #9333ea; margin-bottom: 10px;">Mô tả sản phẩm</h3>
                     <div>
-                        <?php echo nl2br(htmlspecialchars($product['description'] ?? 'Chưa có mô tả cho sản phẩm này.')); ?>
+                        <?php echo $product['description'] ?: 'Chưa có mô tả cho sản phẩm này.'; ?>
                     </div>
                 </div>
             </div>

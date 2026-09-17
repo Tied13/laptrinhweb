@@ -15,13 +15,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
         btnPlus.addEventListener('click', function() {
             let currentVal = parseInt(inputQty.value) || 1;
-            inputQty.value = currentVal + 1;
+            const max = parseInt(inputQty.max, 10) || Infinity;
+            inputQty.value = Math.min(currentVal + 1, max);
         });
 
         inputQty.addEventListener('change', function() {
             if (parseInt(this.value) < 1 || isNaN(parseInt(this.value))) {
                 this.value = 1;
             }
+            const max = parseInt(this.max, 10);
+            if (max && parseInt(this.value, 10) > max) this.value = max;
         });
     }
 
@@ -101,6 +104,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 mainImg.src = this.src;
                 thumbImgs.forEach(t => t.classList.remove('active'));
                 this.classList.add('active');
+            });
+            thumb.addEventListener('keydown', function(event) {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    this.click();
+                }
             });
         });
     }

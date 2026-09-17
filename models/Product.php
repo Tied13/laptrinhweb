@@ -110,13 +110,14 @@ class Product {
     }
 
     // Tạo mới sản phẩm
-    public function create($name, $category_id, $price, $description = '', $thumbnail = '') {
-        $sql = "INSERT INTO " . $this->table . " (name, category_id, price, description, thumbnail) 
-                VALUES (:name, :category_id, :price, :description, :thumbnail)";
+    public function create($name, $category_id, $price, $description = '', $thumbnail = '', $quantity = 0) {
+        $sql = "INSERT INTO " . $this->table . " (name, category_id, price, quantity, description, thumbnail)
+                VALUES (:name, :category_id, :price, :quantity, :description, :thumbnail)";
         $stmt = $this->conn->prepare($sql);
         $stmt->bindValue(':name', trim($name));
         $stmt->bindValue(':category_id', (int)$category_id, PDO::PARAM_INT);
         $stmt->bindValue(':price', (float)$price);
+        $stmt->bindValue(':quantity', (int)$quantity, PDO::PARAM_INT);
         $stmt->bindValue(':description', trim($description));
         $stmt->bindValue(':thumbnail', trim($thumbnail));
         
@@ -127,16 +128,16 @@ class Product {
     }
 
     // Cập nhật sản phẩm
-    public function update($id, $name, $category_id, $price, $description = '', $thumbnail = null) {
+    public function update($id, $name, $category_id, $price, $description = '', $thumbnail = null, $quantity = 0) {
         if ($thumbnail !== null && !empty($thumbnail)) {
             $sql = "UPDATE " . $this->table . " 
-                    SET name = :name, category_id = :category_id, price = :price, 
-                        description = :description, thumbnail = :thumbnail 
+                    SET name = :name, category_id = :category_id, price = :price,
+                        quantity = :quantity, description = :description, thumbnail = :thumbnail
                     WHERE id = :id";
         } else {
             $sql = "UPDATE " . $this->table . " 
-                    SET name = :name, category_id = :category_id, price = :price, 
-                        description = :description 
+                    SET name = :name, category_id = :category_id, price = :price,
+                        quantity = :quantity, description = :description
                     WHERE id = :id";
         }
         
@@ -144,6 +145,7 @@ class Product {
         $stmt->bindValue(':name', trim($name));
         $stmt->bindValue(':category_id', (int)$category_id, PDO::PARAM_INT);
         $stmt->bindValue(':price', (float)$price);
+        $stmt->bindValue(':quantity', (int)$quantity, PDO::PARAM_INT);
         $stmt->bindValue(':description', trim($description));
         $stmt->bindValue(':id', (int)$id, PDO::PARAM_INT);
         

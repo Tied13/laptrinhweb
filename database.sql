@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS products (
     category_id INT NOT NULL,
     name VARCHAR(255) NOT NULL,
     price DECIMAL(10,2) NOT NULL,
+    quantity INT NOT NULL DEFAULT 0,
     thumbnail VARCHAR(255) NOT NULL,
     description LONGTEXT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

@@ -7,6 +7,10 @@ if (!isset($_SESSION['role']) || (int)$_SESSION['role'] !== 1) {
     header('Location: ../login.php');
     exit();
 }
+if (empty($_SESSION['csrf_token'])) $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+$success = $_SESSION['success'] ?? '';
+$error = $_SESSION['error'] ?? '';
+unset($_SESSION['success'], $_SESSION['error']);
 
 // 1. Tự động kết nối DB nếu chưa đi qua Controller
 if (empty($products) || empty($categories)) {
@@ -35,6 +39,7 @@ if (empty($products) || empty($categories)) {
 $categories = $categories ?? [];
 $products = $products ?? [];
 $product_edit = $product_edit ?? null;
+$gallery = [];
 
 if (isset($conn) && ($_GET['action'] ?? '') === 'edit' && !empty($_GET['id'])) {
     $editId = (int)$_GET['id'];
@@ -42,6 +47,11 @@ if (isset($conn) && ($_GET['action'] ?? '') === 'edit' && !empty($_GET['id'])) {
     $stmtEditProduct->bindValue(':id', $editId, PDO::PARAM_INT);
     $stmtEditProduct->execute();
     $product_edit = $stmtEditProduct->fetch(PDO::FETCH_ASSOC) ?: null;
+    if ($product_edit) {
+        $stmtGallery = $conn->prepare("SELECT image_url FROM product_images WHERE product_id = :id ORDER BY id");
+        $stmtGallery->execute([':id' => $editId]);
+        $gallery = $stmtGallery->fetchAll(PDO::FETCH_ASSOC);
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -61,6 +71,8 @@ if (isset($conn) && ($_GET['action'] ?? '') === 'edit' && !empty($_GET['id'])) {
     <?php include '../includes/navbar_admin.php'; ?>
 
     <div class="admin-content">
+        <?php if ($success): ?><p class="message"><?php echo htmlspecialchars($success); ?></p><?php endif; ?>
+        <?php if ($error): ?><p class="message"><?php echo htmlspecialchars($error); ?></p><?php endif; ?>
         <div class="admin-page-header">
             <h2>Quản lý sản phẩm</h2>
             <button type="button" class="btn btn-primary" id="btn-add-product">
@@ -78,8 +90,9 @@ if (isset($conn) && ($_GET['action'] ?? '') === 'edit' && !empty($_GET['id'])) {
             </div>
 
             <form
-                action="../controllers/ProductController.php?action=<?php echo isset($product_edit['id']) ? 'update' : 'store'; ?>"
+                action="../controllers/ProductController.php?action=store"
                 method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
                 <input type="hidden" name="id"
                     value="<?php echo isset($product_edit['id']) ? (int)$product_edit['id'] : ''; ?>">
 
@@ -109,10 +122,16 @@ if (isset($conn) && ($_GET['action'] ?? '') === 'edit' && !empty($_GET['id'])) {
                         value="<?php echo isset($product_edit['price']) ? htmlspecialchars($product_edit['price']) : ''; ?>"
                         required>
                 </div>
+                <div class="form-group">
+                    <label>Số lượng:</label>
+                    <input type="number" min="0" name="quantity" class="form-control"
+                        value="<?php echo (int)($product_edit['quantity'] ?? 0); ?>" required>
+                </div>
 
                 <div class="form-group">
                     <label>Ảnh đại diện sản phẩm:</label>
-                    <input type="file" name="image" class="form-control">
+                    <input type="file" name="image" class="form-control" accept="image/jpeg,image/png,image/webp,image/gif"
+                        <?php echo $product_edit ? '' : 'required'; ?>>
                 </div>
 
                 <div class="form-group">
@@ -123,7 +142,10 @@ if (isset($conn) && ($_GET['action'] ?? '') === 'edit' && !empty($_GET['id'])) {
 
                 <div class="form-group">
                     <label>Chọn nhiều ảnh phụ:</label>
-                    <input type="file" name="images[]" multiple>
+                    <input type="file" name="images[]" multiple accept="image/jpeg,image/png,image/webp,image/gif">
+                    <?php foreach ($gallery as $photo): ?>
+                        <img src="../<?php echo htmlspecialchars($photo['image_url']); ?>" width="70" alt="Ảnh phụ hiện tại">
+                    <?php endforeach; ?>
                 </div>
 
                 <div class="product-form-actions">
@@ -150,11 +172,16 @@ if (isset($conn) && ($_GET['action'] ?? '') === 'edit' && !empty($_GET['id'])) {
                 <tbody>
                     <?php if (!empty($products)): ?>
                     <?php foreach ($products as $p): ?>
+                    <?php
+                        $thumb = $p['thumbnail'] ?? '';
+                        $thumbUrl = preg_match('~^(https?://|assets/)~i', $thumb)
+                            ? $thumb : 'assets/uploads/products/' . basename($thumb);
+                    ?>
                     <tr>
                         <td><?php echo (int)$p['id']; ?></td>
 
                         <td>
-                            <img src="../assets/uploads/products/<?php echo basename(htmlspecialchars($p['thumbnail'] ?? '')); ?>"
+                            <img src="<?php echo preg_match('~^https?://~i', $thumbUrl) ? '' : '../'; ?><?php echo htmlspecialchars($thumbUrl); ?>"
                                 class="admin-thumb" onerror="this.src='https://placehold.co/100x100?text=No+Image';"
                                 alt="<?php echo htmlspecialchars($p['name'] ?? ''); ?>">
                         </td>
@@ -168,9 +195,12 @@ if (isset($conn) && ($_GET['action'] ?? '') === 'edit' && !empty($_GET['id'])) {
                         <td class="admin-actions">
                             <a href="products.php?action=edit&id=<?php echo (int)$p['id']; ?>"
                                 class="btn btn-edit">Sửa</a>
-                            <a href="../controllers/ProductController.php?action=delete&id=<?php echo (int)$p['id']; ?>"
-                                class="btn btn-delete btn-delete-confirm"
-                                onclick="return confirm('Bạn có chắc muốn xóa?');">Xóa</a>
+                            <form action="../controllers/ProductController.php?action=delete" method="post" style="display:inline"
+                                onsubmit="return confirm('Bạn có chắc muốn xóa?');">
+                                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
+                                <input type="hidden" name="id" value="<?php echo (int)$p['id']; ?>">
+                                <button type="submit" class="btn btn-delete">Xóa</button>
+                            </form>
                         </td>
                     </tr>
                     <?php endforeach; ?>
